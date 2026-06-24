@@ -1,0 +1,9 @@
+{
+  "parent": "maple_util_lib:block/rotated_base",
+  "textures": {
+    "back": "quantum_chromodynamic_charge:block/area_destroyer/side",
+    "front": "quantum_chromodynamic_charge:block/area_destroyer/front",
+    "side": "quantum_chromodynamic_charge:block/area_destroyer/side",
+    "top": "quantum_chromodynamic_charge:block/area_destroyer/bottom"
+  }
+}

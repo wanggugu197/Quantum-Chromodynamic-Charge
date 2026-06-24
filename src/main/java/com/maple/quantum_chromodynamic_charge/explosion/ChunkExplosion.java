@@ -1,185 +1,284 @@
 package com.maple.quantum_chromodynamic_charge.explosion;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
-import com.mapleutillib.utils.task.TaskHandler;
 import com.mapleutillib.utils.task.TickableSubscription;
 
-import java.util.List;
+import static com.maple.quantum_chromodynamic_charge.common.QCCLevelTask.TASKS;
+import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.MAX_BLOCKS_PER_TICK;
+import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.chunkZSpeed;
+import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.killLivingIn;
+import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.playExplosionEffects;
 
+/**
+ * 以区块为单元、螺旋向外的大范围清除。
+ * <p>
+ * <b>尺寸换算（务必阅读）</b>：
+ * 
+ * <pre>
+ *   调用方传入 blockExtent（方块尺度的“边长意图”，例如 800）
+ *     → chunkSide = max(1, blockExtent / 8)
+ *     → 若为偶数则减 1，强制奇数
+ *     → 实际清除 (chunkSide × chunkSide) 个区块，中心对齐
+ *   例：800 → 100 → 99 → 99×99 区块
+ * </pre>
+ * 
+ * 非中心区块朝爆炸中心一侧多清 1 格；单 tick 超过 {@link ExplosionSupport#MAX_BLOCKS_PER_TICK} 断点续传。
+ * {@code updateLight=false} 可关闭过程中光照更新。
+ */
 public final class ChunkExplosion {
 
     private final BlockPos center;
     private final ServerLevel level;
-    private final boolean breakBedrock;
-    private final int sideLength;
+    private final boolean updateHeightmap;
+    private final boolean updateLight;
+    private final int speed;
+    private final int stepsPerChunk;
+    private final int totalTime;
+    private final int minY;
+    private final int maxY;
+    private final long[] buffer = new long[MAX_BLOCKS_PER_TICK];
+
     private int time = 0;
+    private boolean stepActive = false;
+    private int stepXEnd;
+    private int stepXStep;
+    private int stepZStart, stepZEnd, stepZStep;
+    private int currentX, currentZ, currentY;
     private final TickableSubscription<?> subscription;
 
-    private ChunkExplosion(BlockPos center, ServerLevel level, int sideLength, boolean breakBedrock, boolean spawnParticles, boolean affectEntities) {
+    private ChunkExplosion(BlockPos center, ServerLevel level, int chunkSide,
+                           boolean updateHeightmap, boolean updateLight,
+                           boolean spawnParticles, boolean affectEntities) {
         this.center = center;
         this.level = level;
-        this.breakBedrock = breakBedrock;
-        this.sideLength = sideLength;
+        this.updateHeightmap = updateHeightmap;
+        this.updateLight = updateLight;
+        this.minY = level.getMinY();
+        this.maxY = level.getMaxY();
 
-        int x = center.getX();
-        int y = center.getY();
-        int z = center.getZ();
+        int worldHeight = this.maxY - this.minY + 1;
+        this.speed = chunkZSpeed(worldHeight);
+        this.stepsPerChunk = Math.max(1, 16 / this.speed);
+        this.totalTime = chunkSide * chunkSide * this.stepsPerChunk;
 
-        if (this.level.isClientSide()) {
-            float soundPitch = (1.0f + (this.level.getRandom().nextFloat() - this.level.getRandom().nextFloat()) * 0.2f) * 0.7f;
-            this.level.playLocalSound(x, y, z, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 4.0f, soundPitch, false);
-        }
-
-        if (spawnParticles) {
-            this.level.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, 1.0, 0.0, 0.0);
-        }
-
-        this.level.gameEvent(null, GameEvent.EXPLODE, new Vec3(x, y, z));
+        int x = center.getX(), y = center.getY(), z = center.getZ();
+        playExplosionEffects(level, x + 0.5, y + 0.5, z + 0.5, spawnParticles);
 
         if (affectEntities) {
-            int chunkX = x >> 4;
-            int chunkZ = z >> 4;
-
-            int chunkRadius = (sideLength - 1) / 2;
-            int minChunkX = chunkX - chunkRadius;
-            int maxChunkX = chunkX + chunkRadius;
-            int minChunkZ = chunkZ - chunkRadius;
-            int maxChunkZ = chunkZ + chunkRadius;
-
-            int minX = minChunkX << 4;
-            int maxX = (maxChunkX << 4) + 15;
-            int minZ = minChunkZ << 4;
-            int maxZ = (maxChunkZ << 4) + 15;
-            int minY = level.getMinY();
-            int maxY = level.getMaxY();
-
-            List<Entity> entities = this.level.getEntities(null, new AABB(minX, minY, minZ, maxX, maxY, maxZ));
-
-            for (Entity entity : entities) {
-                if (entity instanceof Player player && player.gameMode() == GameType.CREATIVE) continue;
-                entity.kill(level);
-            }
+            int chunkX = x >> 4, chunkZ = z >> 4;
+            int radius = (chunkSide - 1) / 2;
+            int minCX = chunkX - radius, maxCX = chunkX + radius;
+            int minCZ = chunkZ - radius, maxCZ = chunkZ + radius;
+            AABB box = new AABB(
+                    minCX << 4, this.minY, minCZ << 4,
+                    (maxCX << 4) + 16, this.maxY + 1.0, (maxCZ << 4) + 16);
+            killLivingIn(level, box);
         }
 
-        subscription = TaskHandler.enqueueTick(level, this::breakBlocksInChunk, 0, 0);
+        subscription = TASKS.enqueueTick(level, this::breakBlocksInChunk, 0, 0);
     }
 
     private void breakBlocksInChunk() {
-        // 根据高度确定处理速度
-        int height = level.getHeight();
-        int speed = height < 600 ? 8 : height < 1200 ? 4 : height < 2400 ? 2 : 1;
-
-        // 每个区块分几步处理
-        int stepsPerChunk = 16 / speed;
-        int totalTime = sideLength * sideLength * stepsPerChunk;
-
-        if (time >= totalTime) {
+        if (time >= totalTime && !stepActive) {
             subscription.unsubscribe();
             return;
         }
 
-        // 当前区块索引 + 区块内步数
-        int chunkIndex = time / stepsPerChunk;
-        int stepInChunk = time % stepsPerChunk;
+        if (!stepActive) {
+            int chunkIndex = time / stepsPerChunk;
+            int stepInChunk = time % stepsPerChunk;
 
-        // 获取螺旋顺序的相对坐标
-        int[] spiralPos = getSpiralOffset(chunkIndex);
-        int dxChunk = spiralPos[0];
-        int dzChunk = spiralPos[1];
+            int[] spiral = getSpiralOffset(chunkIndex);
+            int dx = spiral[0], dz = spiral[1];
+            int cx = (center.getX() >> 4) + dx;
+            int cz = (center.getZ() >> 4) + dz;
 
-        int centerChunkX = center.getX() >> 4;
-        int centerChunkZ = center.getZ() >> 4;
+            int minX = cx << 4;
+            int minZ = cz << 4;
+            int chunkMaxX = minX + 15;
+            int chunkMaxZ = minZ + 15;
 
-        int chunkX = centerChunkX + dxChunk;
-        int chunkZ = centerChunkZ + dzChunk;
+            int xMin = minX;
+            int xMax = chunkMaxX;
+            if (dx > 0) {
+                xMin = minX - 1;
+            } else if (dx < 0) {
+                xMax = chunkMaxX + 1;
+            }
 
-        // 区块基准坐标
-        int minX = (chunkX << 4);
-        int minZ = (chunkZ << 4);
-        int maxY = level.getMaxY();
-        int minY = level.getMinY();
+            int zMin = minZ;
+            int zMax = chunkMaxZ;
+            if (dz > 0) {
+                zMin = minZ - 1;
+            } else if (dz < 0) {
+                zMax = chunkMaxZ + 1;
+            }
 
-        // 决定 X 遍历顺序
-        int xStart = (dxChunk >= 0 ? minX : minX + 15);
-        int xEnd = (dxChunk >= 0 ? minX + 16 : minX - 1);
-        int xStep = (dxChunk >= 0 ? 1 : -1);
+            int stepXStart;
+            if (dx >= 0) {
+                stepXStart = xMin;
+                stepXEnd = xMax + 1;
+                stepXStep = 1;
+            } else {
+                stepXStart = xMax;
+                stepXEnd = xMin - 1;
+                stepXStep = -1;
+            }
 
-        // 决定 Z 遍历顺序（基于 stepInChunk 分块）
-        int zBase = minZ + stepInChunk * speed;
-        int zStart = (dzChunk >= 0 ? zBase : zBase + speed - 1);
-        int zEnd = (dzChunk >= 0 ? zBase + speed : zBase - 1);
-        int zStep = (dzChunk >= 0 ? 1 : -1);
+            int zBase = minZ + stepInChunk * speed;
+            int zLow = zBase;
+            int zHigh = Math.min(zBase + speed - 1, chunkMaxZ);
+            if (dz > 0 && stepInChunk == 0) {
+                zLow = zMin;
+            }
+            if (dz < 0 && stepInChunk == stepsPerChunk - 1) {
+                zHigh = zMax;
+            }
 
-        // 确保不超出当前区块边界
-        int zBound = (chunkZ + 1) << 4;
-        if (dzChunk >= 0 && zEnd > zBound) zEnd = zBound;
-        if (dzChunk < 0 && zEnd < minZ - 1) zEnd = minZ - 1;
+            if (dz >= 0) {
+                stepZStart = zLow;
+                stepZEnd = zHigh + 1;
+                stepZStep = 1;
+            } else {
+                stepZStart = zHigh;
+                stepZEnd = zLow - 1;
+                stepZStep = -1;
+            }
 
-        // 破坏区块内的方块（双向扫描）
-        for (int x = xStart; x != xEnd; x += xStep) {
-            for (int z = zStart; z != zEnd; z += zStep) {
-                for (int y = minY; y <= maxY; y++) {
-                    ILevel.fastRemoveBlock(level, new BlockPos(x, y, z), breakBedrock, false);
+            currentX = stepXStart;
+            currentZ = stepZStart;
+            currentY = minY;
+            stepActive = true;
+        }
+
+        int count = 0;
+        outer:
+        for (int x = currentX; x != stepXEnd; x += stepXStep) {
+            int zFrom = (x == currentX) ? currentZ : stepZStart;
+            for (int z = zFrom; z != stepZEnd; z += stepZStep) {
+                int yFrom = (x == currentX && z == currentZ) ? currentY : minY;
+                // Y 已是世界 min～max，无需再钳制
+                for (int y = yFrom; y <= maxY; y++) {
+                    buffer[count++] = BlockPos.asLong(x, y, z);
+                    if (count >= MAX_BLOCKS_PER_TICK) {
+                        currentX = x;
+                        currentZ = z;
+                        currentY = y + 1;
+                        break outer;
+                    }
                 }
             }
         }
 
-        time++;
+        if (count > 0) {
+            ILevel.setAirBlocksPacked(level, buffer, count, updateHeightmap, updateLight);
+        }
+
+        boolean stepFinished;
+        if (count < MAX_BLOCKS_PER_TICK) {
+            stepFinished = true;
+        } else if (currentY > maxY) {
+            int nextZ = currentZ + stepZStep;
+            if (nextZ != stepZEnd) {
+                currentZ = nextZ;
+                currentY = minY;
+                stepFinished = false;
+            } else {
+                int nextX = currentX + stepXStep;
+                if (nextX != stepXEnd) {
+                    currentX = nextX;
+                    currentZ = stepZStart;
+                    currentY = minY;
+                    stepFinished = false;
+                } else {
+                    stepFinished = true;
+                }
+            }
+        } else {
+            stepFinished = false;
+        }
+
+        if (stepFinished) {
+            stepActive = false;
+            time++;
+        }
     }
 
-    /**
-     * 获取螺旋顺序中的偏移坐标
-     * index=0 → (0,0)
-     * index=1 → (1,0)
-     * index=2 → (1,1)
-     * index=3 → (0,1)
-     * index=4 → (-1,1)
-     * ...
-     */
-    private int[] getSpiralOffset(int index) {
+    private static int[] getSpiralOffset(int index) {
         if (index == 0) return new int[] { 0, 0 };
-
-        int layer = (int) Math.ceil((Math.sqrt(index + 1) - 1) / 2);
+        int layer = (int) Math.ceil((Math.sqrt(index + 1) - 1) / 2.0);
         int legLen = layer * 2;
-        int minIndexInLayer = (2 * layer - 1) * (2 * layer - 1);
-        int offset = index - minIndexInLayer;
-
+        int minInLayer = (2 * layer - 1) * (2 * layer - 1);
+        int offset = index - minInLayer;
         int x, z;
-        if (offset < legLen) {                // 右边往上
+        if (offset < legLen) {
             x = layer;
             z = -layer + offset;
-        } else if (offset < 2 * legLen) {     // 上边往左
+        } else if (offset < 2 * legLen) {
             x = layer - (offset - legLen);
             z = layer;
-        } else if (offset < 3 * legLen) {     // 左边往下
+        } else if (offset < 3 * legLen) {
             x = -layer;
             z = layer - (offset - 2 * legLen);
-        } else {                              // 下边往右
+        } else {
             x = -layer + (offset - 3 * legLen);
             z = -layer;
         }
         return new int[] { x, z };
     }
 
-    public static void explosion(BlockPos center, Level level, int sideLength, boolean breakBedrock, boolean spawnParticles, boolean affectEntities) {
-        if (level instanceof ServerLevel serverLevel) {
-            sideLength /= 8;
-            if (sideLength < 1) sideLength = 1;
-            if (sideLength % 2 == 0) sideLength--;
+    /**
+     * 将调用方“方块尺度边长意图”换算为奇数区块边长。
+     * 
+     * <pre>
+     *   chunkSide = max(1, blockExtent / 8)
+     *   if even → chunkSide--
+     * </pre>
+     */
+    public static int blockExtentToChunkSide(int blockExtent) {
+        int chunkSide = blockExtent / 8;
+        if (chunkSide < 1) chunkSide = 1;
+        if ((chunkSide & 1) == 0) chunkSide--;
+        return chunkSide;
+    }
 
-            new ChunkExplosion(center, serverLevel, sideLength, breakBedrock, spawnParticles, affectEntities);
+    // ---------- 按方块尺度边长（兼容旧调用，如 800）----------
+
+    /**
+     * @param blockExtent 方块尺度边长意图，内部 {@link #blockExtentToChunkSide(int)}
+     * @param updateLight 过程中是否更新光照
+     */
+    public static void explosion(BlockPos center, Level level, int blockExtent,
+                                 boolean updateHeightmap, boolean updateLight,
+                                 boolean spawnParticles, boolean affectEntities) {
+        if (level instanceof ServerLevel serverLevel) {
+            int chunkSide = blockExtentToChunkSide(blockExtent);
+            new ChunkExplosion(center, serverLevel, chunkSide, updateHeightmap, updateLight,
+                    spawnParticles, affectEntities);
+        }
+    }
+
+    // ---------- 直接指定奇数区块边长 ----------
+
+    /**
+     * 按<strong>区块边长</strong>清除（已是区块数，不再 /8）。
+     * 若为偶数会自动减 1；小于 1 则为 1。
+     *
+     * @param chunkSide   区块边长（建议奇数）
+     * @param updateLight 过程中是否更新光照
+     */
+    public static void explosionChunks(BlockPos center, Level level, int chunkSide,
+                                       boolean updateHeightmap, boolean updateLight,
+                                       boolean spawnParticles, boolean affectEntities) {
+        if (level instanceof ServerLevel serverLevel) {
+            if (chunkSide < 1) chunkSide = 1;
+            if ((chunkSide & 1) == 0) chunkSide--;
+            new ChunkExplosion(center, serverLevel, chunkSide, updateHeightmap, updateLight,
+                    spawnParticles, affectEntities);
         }
     }
 }

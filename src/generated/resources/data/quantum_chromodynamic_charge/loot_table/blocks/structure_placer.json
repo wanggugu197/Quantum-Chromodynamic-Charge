@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "quantum_chromodynamic_charge:structure_placer"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "quantum_chromodynamic_charge:blocks/structure_placer"
+}

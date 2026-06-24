@@ -1,0 +1,137 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Clean Client",
+      "presentation": {
+        "group": "Mod Development - quantum_chromodynamic_charge",
+        "order": 0
+      },
+      "projectName": "quantum_chromodynamic_charge",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@F:\\GitHub\\Quantum-Chromodynamic-Charge\\build\\moddev\\cleanClientRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@F:\\GitHub\\Quantum-Chromodynamic-Charge\\build\\moddev\\cleanClientRunVmArgs.txt",
+        "-Dfml.modFolders\u003dquantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\main;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\client;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\test;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\extra;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\clientExtra"
+      ],
+      "cwd": "${workspaceFolder}\\run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Clean Server",
+      "presentation": {
+        "group": "Mod Development - quantum_chromodynamic_charge",
+        "order": 1
+      },
+      "projectName": "quantum_chromodynamic_charge",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@F:\\GitHub\\Quantum-Chromodynamic-Charge\\build\\moddev\\cleanServerRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@F:\\GitHub\\Quantum-Chromodynamic-Charge\\build\\moddev\\cleanServerRunVmArgs.txt",
+        "-Dfml.modFolders\u003dquantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\main;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\client;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\test;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\extra;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\clientExtra"
+      ],
+      "cwd": "${workspaceFolder}\\run\\server",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Client",
+      "presentation": {
+        "group": "Mod Development - quantum_chromodynamic_charge",
+        "order": 2
+      },
+      "projectName": "quantum_chromodynamic_charge",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@F:\\GitHub\\Quantum-Chromodynamic-Charge\\build\\moddev\\clientRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@F:\\GitHub\\Quantum-Chromodynamic-Charge\\build\\moddev\\clientRunVmArgs.txt",
+        "-Dfml.modFolders\u003dquantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\main;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\client;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\test;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\extra;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\clientExtra"
+      ],
+      "cwd": "${workspaceFolder}\\run\\client",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Data Generation",
+      "presentation": {
+        "group": "Mod Development - quantum_chromodynamic_charge",
+        "order": 3
+      },
+      "projectName": "quantum_chromodynamic_charge",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@F:\\GitHub\\Quantum-Chromodynamic-Charge\\build\\moddev\\dataRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@F:\\GitHub\\Quantum-Chromodynamic-Charge\\build\\moddev\\dataRunVmArgs.txt",
+        "-Dfml.modFolders\u003dquantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\main;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\client;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\test;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\extra;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\clientExtra"
+      ],
+      "cwd": "${workspaceFolder}\\run\\data",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Game Tests",
+      "presentation": {
+        "group": "Mod Development - quantum_chromodynamic_charge",
+        "order": 4
+      },
+      "projectName": "quantum_chromodynamic_charge",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@F:\\GitHub\\Quantum-Chromodynamic-Charge\\build\\moddev\\gameTestServerRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@F:\\GitHub\\Quantum-Chromodynamic-Charge\\build\\moddev\\gameTestServerRunVmArgs.txt",
+        "-Dfml.modFolders\u003dquantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\main;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\client;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\test;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\extra;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\clientExtra"
+      ],
+      "cwd": "${workspaceFolder}\\run\\gametest",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Server",
+      "presentation": {
+        "group": "Mod Development - quantum_chromodynamic_charge",
+        "order": 5
+      },
+      "projectName": "quantum_chromodynamic_charge",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@F:\\GitHub\\Quantum-Chromodynamic-Charge\\build\\moddev\\serverRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@F:\\GitHub\\Quantum-Chromodynamic-Charge\\build\\moddev\\serverRunVmArgs.txt",
+        "-Dfml.modFolders\u003dquantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\main;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\client;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\test;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\extra;quantum_chromodynamic_charge%%F:\\GitHub\\Quantum-Chromodynamic-Charge\\bin\\clientExtra"
+      ],
+      "cwd": "${workspaceFolder}\\run\\server",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "quantum_chromodynamic_charge:area_destroyer"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "quantum_chromodynamic_charge:blocks/area_destroyer"
+}

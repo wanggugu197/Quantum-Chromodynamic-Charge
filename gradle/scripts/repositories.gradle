@@ -118,4 +118,6 @@ repositories {
     }
     // GT Odyssey
     maven { url = 'https://maven.gtodyssey.com/releases' }
+    // LDLib2
+    maven { url = "https://maven.firstdark.dev/snapshots" }
 }

@@ -1,8 +1,13 @@
 package com.maple.quantum_chromodynamic_charge.common;
 
 import com.maple.quantum_chromodynamic_charge.data.lang.ExampleLangHandler;
+import com.maple.quantum_chromodynamic_charge.structure.registry.StructureTemplateRegistry;
 
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.event.lifecycle.FMLConstructModEvent;
+
+import com.mapleutillib.utils.task.TaskHandler;
 
 /**
  * 通用初始化类
@@ -13,9 +18,24 @@ public class CommonInit {
 
     public static void init(IEventBus modBus) {
         CommonInit.modBus = modBus;
-        QCCTab.init();
+
+        QCCDataComponent.init();
+
+        // 先完成方块/物品注册（含 StructureMaterials static 材料表），再触达创造页签
         QCCRegistration.init();
+        QCCTab.init();
+
+        TaskHandler.registerAttachment(QCCLevelTask.LEVEL_TASK_DATA);
+
         ExampleLangHandler.init();
         NeoForgeCommonEvent.init();
+        // 触发预设库加载（读 classpath 结构资源）
+        StructureTemplateRegistry.presetCount();
+        modBus.addListener(CommonInit::commonSetup);
+        modBus.addListener(CommonInit::modConstruct);
     }
+
+    private static void commonSetup(FMLCommonSetupEvent event) {}
+
+    private static void modConstruct(FMLConstructModEvent event) {}
 }

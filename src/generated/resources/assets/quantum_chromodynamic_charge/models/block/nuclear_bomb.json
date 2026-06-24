@@ -1,0 +1,8 @@
+{
+  "parent": "maple_util_lib:block/vertical_base",
+  "textures": {
+    "bottom": "minecraft:block/tnt_bottom",
+    "side": "quantum_chromodynamic_charge:block/nuclear_bomb",
+    "top": "minecraft:block/tnt_top"
+  }
+}

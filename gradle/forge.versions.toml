@@ -1,21 +1,56 @@
 [versions]
 registryLib = "[8.0.14,)"
-mapleutillib = "[0.0.3,)"
+mapleutillib = "[0.1.6,)"
+configuration = "4.1.2+26.1.2"
 
-jei = "29.6.2.31"
-jade = "26.1.3+neoforge"
-ftbChunks = "2101.1.11"
-ftbLibrary = "2101.1.21"
+jei = "29.16.0.47"
+jade = "26.1.8+neoforge"
+
+ftbLibrary = "26.1.2.6"
+ftbTeams = "26.1.2.4"
+ftbQuests = "26.1.2.2"
+ftbEssentials = "26.1.2.4"
+ftbChunks = "26.1.2.6"
+ftbRanks = "26.1.2.2"
+ftbUltimine = "26.1.2.5"
+
+ae2 = "26.1.10-beta"
+ldlib2 = "26.1.2.29"
 
 [libraries]
+# https://maven.gtodyssey.com/#/releases/com/gto/registrylib-neoforge-26.1.2
 registrylib = { group = "com.gto", name = "registrylib-neoforge-26.1.2", version.ref = "registryLib" }
+# https://maven.gtodyssey.com/#/releases/com/maple197/MapleUtilLib-neoforge-26.1.2
 mapleutillib = { group = "com.maple197", name = "MapleUtilLib-neoforge-26.1.2", version.ref = "mapleutillib" }
+# https://repo.repsy.io/mvn/toma/public/dev/toma/configuration/configuration-neoforge/
+configuration = { module = "dev.toma.configuration:configuration-neoforge", version.ref = "configuration" }
 
+# https://maven.blamejared.com/mezz/jei/jei-26.1.2-neoforge-api/
 jeiApi = { group = "mezz.jei", name = "jei-26.1.2-neoforge-api", version.ref = "jei" }
+# https://maven.blamejared.com/mezz/jei/jei-26.1.2-neoforge/
 jei = { group = "mezz.jei", name = "jei-26.1.2-neoforge", version.ref = "jei" }
+# https://modrinth.com/mod/jade/versions
 jade = { group = "maven.modrinth", name = "jade", version.ref = "jade" }
 
-ftbChunks = { group = "dev.ftb.mods", name = "ftb-chunks-neoforge", version.ref = "ftbChunks" }
+# https://maven.ftb.dev/#/releases/dev/ftb/mods/ftb-library-neoforge
 ftbLibrary = { group = "dev.ftb.mods", name = "ftb-library-neoforge", version.ref = "ftbLibrary" }
+# https://maven.ftb.dev/#/releases/dev/ftb/mods/ftb-teams-neoforge
+ftbTeams = { group = "dev.ftb.mods", name = "ftb-teams-neoforge", version.ref = "ftbTeams" }
+# https://maven.ftb.dev/#/releases/dev/ftb/mods/ftb-quests-neoforge
+ftbQuests = { group = "dev.ftb.mods", name = "ftb-quests-neoforge", version.ref = "ftbQuests" }
+# https://maven.ftb.dev/#/releases/dev/ftb/mods/ftb-essentials-neoforge
+ftbEssentials = { group = "dev.ftb.mods", name = "ftb-essentials-neoforge", version.ref = "ftbEssentials" }
+# https://maven.ftb.dev/#/releases/dev/ftb/mods/ftb-chunks-neoforge
+ftbChunks = { group = "dev.ftb.mods", name = "ftb-chunks-neoforge", version.ref = "ftbChunks" }
+# https://maven.ftb.dev/#/releases/dev/ftb/mods/ftb-ranks-neoforge
+ftbRanks = { group = "dev.ftb.mods", name = "ftb-ranks-neoforge", version.ref = "ftbRanks" }
+# https://maven.ftb.dev/#/releases/dev/ftb/mods/ftb-ultimine-neoforge
+ftbUltimine = { group = "dev.ftb.mods", name = "ftb-ultimine-neoforge", version.ref = "ftbUltimine" }
+
+# https://central.sonatype.com/artifact/org.appliedenergistics/appliedenergistics2
+ae2 = { group = "org.appliedenergistics", name = "appliedenergistics2", version.ref = "ae2" }
+# https://maven.firstdark.dev/#/snapshots/com/lowdragmc/ldlib2/ldlib2-neoforge-26.1
+ldlib2 = { group = "com.lowdragmc.ldlib2", name = "ldlib2-neoforge-26.1", version.ref = "ldlib2" }
 
 [bundles]
+ftbAll = ["ftbLibrary", "ftbTeams" , "ftbQuests", "ftbEssentials", "ftbChunks", "ftbRanks", "ftbUltimine"]

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "quantum_chromodynamic_charge:block/structure_placer",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "quantum_chromodynamic_charge:block/structure_placer"
+    },
+    "facing=south": {
+      "model": "quantum_chromodynamic_charge:block/structure_placer",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "quantum_chromodynamic_charge:block/structure_placer",
+      "y": 270
+    }
+  }
+}

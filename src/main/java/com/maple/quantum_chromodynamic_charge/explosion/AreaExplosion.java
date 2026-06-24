@@ -1,37 +1,51 @@
 package com.maple.quantum_chromodynamic_charge.explosion;
 
-import net.minecraft.client.telemetry.TelemetryProperty;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
-import com.mapleutillib.utils.task.TaskHandler;
 import com.mapleutillib.utils.task.TickableSubscription;
 
-import java.util.List;
+import static com.maple.quantum_chromodynamic_charge.common.QCCLevelTask.TASKS;
+import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.MAX_BLOCKS_PER_TICK;
+import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.areaSpeedX;
+import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.areaSpeedZ;
+import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.killLivingIn;
+import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.playExplosionEffects;
 
+/**
+ * 轴对齐矩形区域分步清除。
+ * <p>
+ * X/Z 方向相邻条带在接缝处各重叠 1 格，把边界清得更干净。
+ * {@code updateLight=false} 可关闭过程中光照更新。
+ */
 public final class AreaExplosion {
 
     private final ServerLevel level;
-    private final boolean breakBedrock;
+    private final boolean updateHeightmap;
+    private final boolean updateLight;
     private final int minX, minY, minZ, maxX, maxY, maxZ;
+    private final int speedX, speedZ;
+    private final int timeX, timeZ, totalTime;
+    private final long[] buffer = new long[MAX_BLOCKS_PER_TICK];
+
     private int time = 0;
     private final TickableSubscription<?> subscription;
 
-    private AreaExplosion(BlockPos center, BlockPos pos1, BlockPos pos2, ServerLevel level, boolean breakBedrock, boolean spawnParticles, boolean affectEntities) {
-        this.level = level;
-        this.breakBedrock = breakBedrock;
+    private boolean stepActive = false;
+    private int stepEndX;
+    private int stepStartZ;
+    private int stepEndZ;
+    private int currentX, currentZ, currentY;
 
-        // 计算区域边界
+    private AreaExplosion(BlockPos center, BlockPos pos1, BlockPos pos2, ServerLevel level,
+                          boolean updateHeightmap, boolean updateLight,
+                          boolean spawnParticles, boolean affectEntities) {
+        this.level = level;
+        this.updateHeightmap = updateHeightmap;
+        this.updateLight = updateLight;
+
         this.minX = Math.min(pos1.getX(), pos2.getX());
         this.minY = Math.min(pos1.getY(), pos2.getY());
         this.minZ = Math.min(pos1.getZ(), pos2.getZ());
@@ -39,74 +53,114 @@ public final class AreaExplosion {
         this.maxY = Math.max(pos1.getY(), pos2.getY());
         this.maxZ = Math.max(pos1.getZ(), pos2.getZ());
 
-        // 计算中心点（用于声音和粒子效果）
-        int X = center.getX();
-        int Y = center.getY();
-        int Z = center.getZ();
+        int height = this.maxY - this.minY + 1;
+        this.speedZ = areaSpeedZ(height);
+        this.speedX = areaSpeedX(height);
 
-        if (this.level.isClientSide()) {
-            float soundPitch = (1.0f + (this.level.getRandom().nextFloat() - this.level.getRandom().nextFloat()) * 0.2f) * 0.7f;
-            this.level.playLocalSound(X, Y, Z, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 4.0f, soundPitch, false);
-        }
+        int sizeX = this.maxX - this.minX + 1;
+        int sizeZ = this.maxZ - this.minZ + 1;
+        this.timeX = Math.max(1, (int) Math.ceil(sizeX / (double) this.speedX));
+        this.timeZ = Math.max(1, (int) Math.ceil(sizeZ / (double) this.speedZ));
+        this.totalTime = this.timeX * this.timeZ;
 
-        if (spawnParticles) {
-            this.level.addParticle(ParticleTypes.EXPLOSION_EMITTER, X, Y, Z, 1.0, 0.0, 0.0);
-        }
-
-        this.level.gameEvent(null, GameEvent.EXPLODE, new Vec3(X, Y, Z));
+        playExplosionEffects(level, center.getX() + 0.5, center.getY() + 0.5, center.getZ() + 0.5, spawnParticles);
 
         if (affectEntities) {
-            AABB affectBox = new AABB(minX, minY, minZ, maxX, maxY, maxZ);
-            List<Entity> entities = this.level.getEntities(null, affectBox);
-
-            for (Entity entity : entities) {
-                if (entity instanceof Player player && player.gameMode() == GameType.CREATIVE) continue;
-                entity.kill(level);
-            }
+            killLivingIn(level, new AABB(minX, minY, minZ, maxX + 1, maxY + 1, maxZ + 1));
         }
 
-        subscription = TaskHandler.enqueueTick(level, this::breakBlocksInArea, 0, 0);
+        subscription = TASKS.enqueueTick(level, this::breakBlocksInArea, 0, 0);
     }
 
     private void breakBlocksInArea() {
-        // 根据高度确定处理速度
-        int height = maxY - minY;
-        int speedZ = height < 80 ? 64 : height < 160 ? 32 : height < 300 ? 16 : height < 600 ? 8 : height < 1200 ? 4 : height < 2400 ? 2 : 1;
-        int speedX = height < 20 ? 128 : height < 40 ? 64 : height < 80 ? 32 : 16;
-
-        int timeX = (int) Math.ceil((double) (maxX - minX) / speedX);
-        int timeZ = (int) Math.ceil((double) (maxZ - minZ) / speedZ);
-
-        int totalTime = timeX * timeZ;
-
-        if (time >= totalTime) {
+        if (time >= totalTime && !stepActive) {
             subscription.unsubscribe();
             return;
         }
 
-        // 计算当前步骤的索引
-        int indexX = time / timeZ;
-        int indexZ = time % timeZ;
-        int chunkRow = time / timeX;
-        // 计算当前区块的范围
-        int startX = minX + indexX * speedX;
-        int endX = Math.min(startX + speedX, maxX);
-        int startZ = minZ + indexZ * speedZ;
-        int endZ = Math.min(startZ + speedZ, maxZ);
+        if (!stepActive) {
+            int indexX = time / timeZ;
+            int indexZ = time % timeZ;
 
-        // 破坏当前区块内的方块
-        for (int x = startX - (chunkRow == 0 ? 0 : 1); x <= endX; x++) {
-            for (int z = startZ; z <= endZ; z++) {
-                for (int y = minY; y <= maxY; y++) {
-                    ILevel.fastRemoveBlock(level, new BlockPos(x, y, z), breakBedrock, false);
+            int baseStartX = minX + indexX * speedX;
+            int stepStartX = indexX == 0 ? baseStartX : Math.max(minX, baseStartX - 1);
+            stepEndX = (indexX == timeX - 1) ? maxX : Math.min(baseStartX + speedX - 1, maxX);
+
+            int baseStartZ = minZ + indexZ * speedZ;
+            stepStartZ = indexZ == 0 ? baseStartZ : Math.max(minZ, baseStartZ - 1);
+            stepEndZ = (indexZ == timeZ - 1) ? maxZ : Math.min(baseStartZ + speedZ - 1, maxZ);
+
+            currentX = stepStartX;
+            currentZ = stepStartZ;
+            currentY = minY;
+            stepActive = true;
+        }
+
+        int worldMinY = level.getMinY();
+        int worldMaxY = level.getMaxY();
+        int scanMinY = Math.max(minY, worldMinY);
+        int yEnd = Math.min(maxY, worldMaxY);
+
+        int count = 0;
+        outer:
+        for (int x = currentX; x <= stepEndX; x++) {
+            for (int z = (x == currentX ? currentZ : stepStartZ); z <= stepEndZ; z++) {
+                int y0 = (x == currentX && z == currentZ) ? currentY : minY;
+                int yStart = Math.max(y0, scanMinY);
+                if (yStart > yEnd) {
+                    continue;
+                }
+                for (int y = yStart; y <= yEnd; y++) {
+                    buffer[count++] = BlockPos.asLong(x, y, z);
+                    if (count >= MAX_BLOCKS_PER_TICK) {
+                        currentX = x;
+                        currentZ = z;
+                        currentY = y + 1;
+                        break outer;
+                    }
                 }
             }
         }
 
-        time++;
+        if (count > 0) {
+            ILevel.setAirBlocksPacked(level, buffer, count, updateHeightmap, updateLight);
+        }
+
+        boolean stepFinished;
+        if (count < MAX_BLOCKS_PER_TICK) {
+            stepFinished = true;
+        } else if (currentY > maxY || currentY > yEnd) {
+            if (currentZ < stepEndZ) {
+                currentZ++;
+                currentY = minY;
+                stepFinished = false;
+            } else if (currentX < stepEndX) {
+                currentX++;
+                currentZ = stepStartZ;
+                currentY = minY;
+                stepFinished = false;
+            } else {
+                stepFinished = true;
+            }
+        } else {
+            stepFinished = false;
+        }
+
+        if (stepFinished) {
+            stepActive = false;
+            time++;
+        }
     }
 
-    public static void explosion(BlockPos center, BlockPos pos1, BlockPos pos2, Level level, boolean breakBedrock, boolean spawnParticles, boolean affectEntities) {
-        if (level instanceof ServerLevel serverLevel) new AreaExplosion(center, pos1, pos2, serverLevel, breakBedrock, spawnParticles, affectEntities);
+    /**
+     * @param updateLight 过程中是否更新光照；大范围可传 {@code false}
+     */
+    public static void explosion(BlockPos center, BlockPos pos1, BlockPos pos2, Level level,
+                                 boolean updateHeightmap, boolean updateLight,
+                                 boolean spawnParticles, boolean affectEntities) {
+        if (level instanceof ServerLevel serverLevel) {
+            new AreaExplosion(center, pos1, pos2, serverLevel, updateHeightmap, updateLight,
+                    spawnParticles, affectEntities);
+        }
     }
 }

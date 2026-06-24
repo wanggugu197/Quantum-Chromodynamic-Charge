@@ -3,6 +3,7 @@ package com.maple.quantum_chromodynamic_charge;
 import com.maple.quantum_chromodynamic_charge.common.CommonInit;
 import com.maple.quantum_chromodynamic_charge.config.QuantumChromodynamicChargeConfig;
 
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -38,5 +39,9 @@ public class QuantumChromodynamicChargeMod {
         modContainer.registerConfig(ModConfig.Type.COMMON, QuantumChromodynamicChargeConfig.SPEC);
         // 初始化内容
         CommonInit.init(modEventBus);
+    }
+
+    public static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath(MODID, path);
     }
 }
