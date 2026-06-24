@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "quantum_chromodynamic_charge:item/unstable_star"
+  }
+}

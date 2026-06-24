@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "quantum_chromodynamic_charge:block/example_block"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "block.quantum_chromodynamic_charge.example_block": "Example Block",
+  "block.quantum_chromodynamic_charge.leptonic_charge": "Leptonic Charge",
+  "block.quantum_chromodynamic_charge.naquadria_charge": "Naquadria Charge",
+  "block.quantum_chromodynamic_charge.quantum_chromodynamic_charge": "Quantum Chromodynamic Charge",
+  "example.example.example": "Example",
+  "item.quantum_chromodynamic_charge.example_item": "Example Item",
+  "item.quantum_chromodynamic_charge.gravi_star": "Gravi Star",
+  "item.quantum_chromodynamic_charge.quantum_star": "Quantum Star",
+  "item.quantum_chromodynamic_charge.unstable_star": "Unstable Star",
+  "itemGroup.quantum_chromodynamic_charge.quantum_chromodynamic_charge": "Quantum Chromodynamic Charge"
+}

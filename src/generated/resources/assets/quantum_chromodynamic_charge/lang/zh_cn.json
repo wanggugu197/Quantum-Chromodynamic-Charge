@@ -1,0 +1,12 @@
+{
+  "block.quantum_chromodynamic_charge.example_block": "示例块",
+  "block.quantum_chromodynamic_charge.leptonic_charge": "轻子爆弹",
+  "block.quantum_chromodynamic_charge.naquadria_charge": "超能硅岩爆弹",
+  "block.quantum_chromodynamic_charge.quantum_chromodynamic_charge": "量子色动力学爆弹",
+  "example.example.example": "示例",
+  "item.quantum_chromodynamic_charge.example_item": "示例物品",
+  "item.quantum_chromodynamic_charge.gravi_star": "引力之星",
+  "item.quantum_chromodynamic_charge.quantum_star": "量子之星",
+  "item.quantum_chromodynamic_charge.unstable_star": "易变之星",
+  "itemGroup.quantum_chromodynamic_charge.quantum_chromodynamic_charge": "量子色动力学爆弹"
+}

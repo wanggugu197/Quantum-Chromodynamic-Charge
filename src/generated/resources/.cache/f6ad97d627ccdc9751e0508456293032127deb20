@@ -1,0 +1,27 @@
+// 26.1.2	2026-06-24T23:58:36.1280837	RegistryCore Provider for quantum_chromodynamic_charge [, Loot Tables, Advancements, Datapack Registries, Tags (enchantments), Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), Model Definitions - quantum_chromodynamic_charge, Lang (Languages: en_us for mod: quantum_chromodynamic_charge), quantum_chromodynamic_charge, Lang (Languages: en_ud for mod: quantum_chromodynamic_charge), Lang (Languages: zh_cn for mod: quantum_chromodynamic_charge), Lang (Languages: zh_tw for mod: quantum_chromodynamic_charge), Lang (Languages: ja_jp for mod: quantum_chromodynamic_charge), Lang (Languages: ru_ru for mod: quantum_chromodynamic_charge), Lang (Languages: fr_fr for mod: quantum_chromodynamic_charge), Lang (Languages: de_de for mod: quantum_chromodynamic_charge), Lang (Languages: es_es for mod: quantum_chromodynamic_charge), Lang (Languages: pt_pt for mod: quantum_chromodynamic_charge), Lang (Languages: it_it for mod: quantum_chromodynamic_charge), Lang (Languages: ko_kr for mod: quantum_chromodynamic_charge)]
+6afd04b207c1c178ccbad1e2d0c080a5e186fb1d assets/quantum_chromodynamic_charge/blockstates/example_block.json
+43a1cca8abd7d719d7307ab4dcc6a0b1645b9cfb assets/quantum_chromodynamic_charge/blockstates/leptonic_charge.json
+b2b21e0e1498a4da2dd0c5ff8542dc83f58c1df8 assets/quantum_chromodynamic_charge/blockstates/naquadria_charge.json
+cb5b701f839ad7790226f6f81153640898f6365c assets/quantum_chromodynamic_charge/blockstates/quantum_chromodynamic_charge.json
+e176777124926788e0a14a424b2a94f88bbcf3d4 assets/quantum_chromodynamic_charge/items/example_block.json
+591a8450de511ea9643da1dda2140f41b01c1ab7 assets/quantum_chromodynamic_charge/items/example_item.json
+73be9c7a4b0605a56fa41b90ec9416e2e4a6c395 assets/quantum_chromodynamic_charge/items/gravi_star.json
+9b286f92a7ca861fb55330cc3484d40c1f45b162 assets/quantum_chromodynamic_charge/items/leptonic_charge.json
+20dc44304d957b143769333aa78126cd40897b4e assets/quantum_chromodynamic_charge/items/naquadria_charge.json
+58c34e99f8bf952b675cda9261eff88e9260ffaa assets/quantum_chromodynamic_charge/items/quantum_chromodynamic_charge.json
+2878fabb6739c84f34d09793aaa15fd4904cfb46 assets/quantum_chromodynamic_charge/items/quantum_star.json
+961210d1be2927be6c13e7af7144613c12d9e544 assets/quantum_chromodynamic_charge/items/unstable_star.json
+ac2d2384bee45228b659587a95ec55f53d468352 assets/quantum_chromodynamic_charge/lang/en_us.json
+cf64e7e4de106526ada0b7d059168ca9fa73df1a assets/quantum_chromodynamic_charge/lang/zh_cn.json
+bb857e2369fc633ef189d59691ecfb9a2a165b31 assets/quantum_chromodynamic_charge/models/block/example_block.json
+09bfec51b289afb5ffef7d6be0b3d5c3916b5045 assets/quantum_chromodynamic_charge/models/block/leptonic_charge.json
+81e2059142565076c59c03136746a374a57a586d assets/quantum_chromodynamic_charge/models/block/naquadria_charge.json
+8147432139ffb6d4b96232c9fe4fa9b2f2f8be99 assets/quantum_chromodynamic_charge/models/block/quantum_chromodynamic_charge.json
+f438902e2d552f3b27d353a47f1fa0a3ff04bacd assets/quantum_chromodynamic_charge/models/item/example_item.json
+09476e5ed06909672ad3133a736fee9afc15f269 assets/quantum_chromodynamic_charge/models/item/gravi_star.json
+944239bb92d924304c3b46c81aaa14ec0e48d01c assets/quantum_chromodynamic_charge/models/item/quantum_star.json
+22c3f71ff563aa0c030938e123428836616621ed assets/quantum_chromodynamic_charge/models/item/unstable_star.json
+e2cf3f0ef1eee9f9dfde8fd64a52b02775554aeb data/quantum_chromodynamic_charge/loot_table/blocks/example_block.json
+1b9e4771376ae4fb7ed808cf7e21fd939d41affc data/quantum_chromodynamic_charge/loot_table/blocks/leptonic_charge.json
+3ce1128f9ffdc3d1746875f32ed4d56e563ce8a1 data/quantum_chromodynamic_charge/loot_table/blocks/naquadria_charge.json
+23a4d54a6c93804f5f899423f5b4d4ed906005e3 data/quantum_chromodynamic_charge/loot_table/blocks/quantum_chromodynamic_charge.json
