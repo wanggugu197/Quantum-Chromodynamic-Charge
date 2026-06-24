@@ -1,0 +1,28 @@
+// Jar 打包配置
+
+// 从项目属性读取配置
+def mod_id = project.properties['mod_id']
+def mod_version = project.properties['version']
+
+// 注册 slimJar 任务
+tasks.register('slimJar', Jar) {
+    dependsOn("classes")           // 依赖 classes 任务
+    archiveClassifier = "slim"     // 添加 slim 分类器
+    from sourceSets.main.output    // 从主源码集输出
+}
+
+// 项目评估完成后配置所有 Jar 任务
+afterEvaluate {
+    tasks.withType(org.gradle.jvm.tasks.Jar).configureEach {
+        destinationDirectory = file('build/libs/')  // 输出目录
+        manifest.attributes([
+                'MixinConfigs': mod_id + '.mixins.json',   // Mixin 配置文件
+                'Specification-Title': project.name,       // 规范标题
+                'Specification-Version': mod_version,      // 规范版本
+                'Specification-Vendor': mod_authors,       // 规范供应商
+                'Implementation-Title': base.archivesName, // 实现标题
+                'Implementation-Version': version,         // 实现版本
+                'Implementation-Vendor': mod_authors,      // 实现供应商
+        ])
+    }
+}

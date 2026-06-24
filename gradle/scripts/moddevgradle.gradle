@@ -1,0 +1,114 @@
+// 从 gradle.properties 读取模组配置属性
+def mod_id = project.properties['mod_id']
+
+// NeoForge 模组开发核心配置块
+neoForge {
+    // 指定 NeoForge 版本（从 libs.versions.toml 读取）
+    version = libs.versions.neoForge.get()
+
+    // 向测试源码集添加模组开发依赖
+    addModdingDependenciesTo(sourceSets.test)
+    // addModdingDependenciesTo(sourceSets.extra)  // 可选：向 extra 源码集添加依赖
+
+    // 模组与源码集绑定配置
+    mods {
+        // 将模组 ID 与各源码集关联
+        "${mod_id}" {
+            sourceSet(sourceSets.main)      // 主源码集（服务端兼容代码）
+            sourceSet(sourceSets.client)    // 客户端源码集
+            sourceSet(sourceSets.test)      // 测试源码集
+            sourceSet(sourceSets.extra)     // 额外源码集
+            sourceSet(sourceSets.clientExtra) // 额外客户端源码集
+        }
+    }
+
+    // 默认运行配置 - 可根据需要修改、删除或复制
+    runs {
+        // 客户端运行配置（带额外依赖）
+        client {
+            client()  // 声明为客户端类型
+            sourceSet = sourceSets.clientExtra  // 使用客户端额外源码集
+            ideName = "Client"  // IDE 中显示的名称
+
+            gameDirectory.set(file('run/client'))  // 游戏运行目录
+            systemProperty('neoforge.enabledGameTestNamespaces', "${mod_id}")  // 启用 GameTest
+        }
+
+        // 服务端运行配置
+        server {
+            server()  // 声明为服务端类型
+            sourceSet = sourceSets.extra  // 使用额外源码集
+            ideName = "Server"
+
+            gameDirectory.set(file('run/server'))
+            programArguments.addAll('--nogui', '--world', 'world-extra')  // 无 GUI 模式，指定世界
+            systemProperty('neoforge.enabledGameTestNamespaces', "${mod_id}")
+        }
+
+        // 纯净客户端（不含额外依赖如 Jade、EMI、AE2）
+        cleanClient {
+            client()
+            sourceSet = sourceSets.client
+            ideName = "Clean Client"
+
+            systemProperty('neoforge.enabledGameTestNamespaces', "${mod_id}")
+        }
+
+        // 纯净服务端
+        cleanServer {
+            server()
+            sourceSet = sourceSets.main
+            ideName = "Clean Server"
+
+            gameDirectory.set(file('run/server'))
+            programArgument '--nogui'
+            systemProperty('neoforge.enabledGameTestNamespaces', "${mod_id}")
+        }
+
+        // GameTest 服务端 - 自动运行所有注册的游戏测试后退出
+        // 默认情况下，若无测试会崩溃；其他配置可通过 /test 命令手动运行测试
+        gameTestServer {
+            type = "gameTestServer"
+            sourceSet = sourceSets.test
+            ideName = "Game Tests"
+
+            gameDirectory.set(file('run/gametest'))
+            systemProperty('neoforge.enabledGameTestNamespaces', "${mod_id}")
+        }
+
+        // 数据生成配置 - 用于自动生成方块/物品注册、语言文件等
+        data {
+            serverData()  // 启用服务端数据生成
+            clientData()  // 启用客户端数据生成
+            sourceSet = sourceSets.main
+            ideName = "Data Generation"
+
+            gameDirectory.set(file('run/data'))
+            programArguments.addAll('--mod', "${mod_id}")  // 指定要生成数据的模组
+            programArguments.addAll('--all')  // 生成所有类型的数据
+            programArguments.addAll('--output', file('src/generated/resources/').getAbsolutePath())  // 输出目录
+            programArguments.addAll('--existing', file('src/main/resources/').getAbsolutePath())  // 现有资源目录
+        }
+
+        // 应用于以上所有运行配置的通用设置
+        configureEach {
+            // 用户开发环境的推荐日志配置
+            // 可根据需要添加/移除标记（逗号分隔）
+            // "SCAN": 模组扫描日志
+            // "REGISTRIES": 注册表事件日志
+            // "REGISTRYDUMP": 输出所有注册表内容
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            // jvmArgument('-ea:your.package.name...')  // 可选：启用特定包的断言
+
+            logLevel = org.slf4j.event.Level.INFO  // 日志级别
+        }
+    }
+}
+
+// IntelliJ IDEA 配置
+idea {
+    module {
+        downloadSources = true  // 下载依赖源码
+        downloadJavadoc = true  // 下载依赖文档
+    }
+}

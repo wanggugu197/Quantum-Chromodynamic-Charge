@@ -1,0 +1,15 @@
+# 版本定义块 - 集中管理所有依赖的版本号
+[versions]
+minecraft = "26.1.2"         # Minecraft 游戏版本
+neoForge = "26.1.2.71"       # NeoForge 模组框架版本
+
+modDevGradle = "2.0.140"     # NeoForge ModDevGradle 插件版本
+spotless = "8.1.0"           # Spotless 代码格式化插件版本
+lombok = "9.2.0"             # Lombok 代码简化工具版本
+
+
+# 插件定义块 - 声明项目使用的 Gradle 插件
+[plugins]
+modDevGradle            = { id = "net.neoforged.moddev", version.ref = "modDevGradle" }   # NeoForge 模组开发核心插件
+spotless                = { id = "com.diffplug.spotless", version.ref = "spotless" }      # 代码格式化插件
+lombok                  = { id = "io.freefair.lombok", version.ref = "lombok" }           # Lombok 注解处理器插件

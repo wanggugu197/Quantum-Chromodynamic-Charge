@@ -1,0 +1,82 @@
+// 获取项目属性配置的辅助方法
+String getConfig(String key) {
+    return project.properties.get(key)
+}
+
+// 从 gradle.properties 读取配置项
+def version = getConfig("version")                            // 模组版本
+def mod_id = getConfig("mod_id")                              // 模组 ID
+def minecraft_version = getConfig("minecraft_version_range")  // Minecraft 版本范围
+def mod_license = getConfig("mod_license")                    // 模组许可证
+def mod_name = getConfig("mod_name")                          // 模组名称
+def mod_authors = getConfig("mod_authors")                    // 模组作者
+def mod_description = getConfig("mod_description")            // 模组描述
+def mod_url = getConfig("mod_url")                            // 模组 URL
+def mod_issue_tracker = getConfig("mod_issue_tracker")        // 问题追踪 URL
+
+// 版本号处理：支持环境变量添加后缀
+String suffix = System.getenv("VERSION_SUFFIX")
+String version_toml = "$version" + (suffix ? "+$suffix" : "")
+
+// 注册打印版本任务
+tasks.register('printVersion') {
+    doLast {
+        println mod_version
+    }
+}
+
+// 创建运行目录 - 避免污染开发环境
+tasks.matching { it.name.startsWith('prepare') }.configureEach {
+    doFirst {
+        mkdir('run')            // 主运行目录
+        mkdir('run/server')     // 服务端运行目录
+        mkdir('run/gametest')   // GameTest 运行目录
+        mkdir('run/data')       // 数据生成运行目录
+    }
+}
+
+// 注册生成模组元数据任务
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    // 获取 NeoForge 版本（去掉最后一位补丁号）
+    var neoVersion = libs.versions.neoForge.get()
+    neoVersion = neoVersion.substring(0, neoVersion.lastIndexOf('.'))
+    
+    // 定义模板替换属性
+    var replaceProperties = [
+            minecraft_version   : minecraft_version,
+            neo_version         : neoVersion,
+            mod_issue_tracker   : mod_issue_tracker,
+            mod_license         : mod_license,
+
+            mod_id              : mod_id,
+            version             : version_toml,
+            mod_name            : mod_name,
+            mod_authors         : mod_authors,
+            mod_description     : mod_description,
+            mod_url             : mod_url
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
+}
+// 将生成的元数据目录添加为主资源目录
+// 这样 Gradle 和 IDE 构建都能正确识别
+sourceSets.main.resources.srcDir generateModMetadata
+// 设置 IDE 同步时自动运行元数据生成任务，避免手动执行
+neoForge.ideSyncTask generateModMetadata
+
+// 配置资源处理任务的重复文件策略
+tasks.named('processResources').configure {
+    // EXCLUDE 策略：保留第一个遇到的文件，跳过后续重复文件
+    // 由于 build.gradle 中 src/main/resources 声明在 src/generated/resources 之前，
+    // 因此 src/main/resources 中的文件优先保留，src/generated/resources 中的重复文件会被排除
+    duplicatesStrategy = 'EXCLUDE'
+    // 对lang文件使用不同的策略：让生成目录的文件覆盖主资源目录
+    eachFile { file ->
+        if (file.path.contains('/lang/') || file.name.endsWith('.json') && file.path.contains('lang')) {
+            // 对于lang文件，设置为INCLUDE以便后续处理
+            // 实际覆盖通过目录顺序实现
+        }
+    }
+}

@@ -1,0 +1,25 @@
+// Spotless 代码格式化配置
+spotless {
+    encoding 'UTF-8'  // 设置编码为 UTF-8
+
+    // 杂项文件格式化规则
+    format 'misc', {
+        target '.gitignore'       // 目标文件
+        trimTrailingWhitespace()  // 移除行尾空格
+        leadingTabsToSpaces()     // 将制表符转换为空格
+    }
+    
+    // Java 代码格式化规则
+    java {
+        target 'src/main/java/**/*.java'  // 目标 Java 文件
+
+        def orderFile = file("$rootDir/gradle/spotless/spotless.importorder")         // import 排序规则文件
+        def formatFile = file("$rootDir/gradle/spotless/spotless.eclipseformat.xml")  // Eclipse 格式化配置
+
+        toggleOffOn() // 允许使用注释禁用格式化
+        importOrderFile(orderFile)  // 应用 import 排序
+        removeUnusedImports('cleanthat-javaparser-unnecessaryimport')  // 移除未使用的 import
+        endWithNewline()  // 文件末尾添加换行
+        eclipse('4.36').configFile(formatFile)  // 使用 Eclipse 格式化规则
+    }
+}

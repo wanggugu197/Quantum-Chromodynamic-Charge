@@ -1,0 +1,22 @@
+// Maven 发布配置示例
+// 如需启用发布功能，请取消注释以下代码并配置仓库地址
+/*
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            artifactId = project.base.archivesName.get()
+            from project.components.java
+        }
+    }
+
+    repositories {
+        maven {
+            url = "https://your-maven-repo.com/maven/"
+            credentials {
+                username = System.getenv("MAVEN_USER")
+                password = System.getenv("MAVEN_PASSWORD")
+            }
+        }
+    }
+}
+*/

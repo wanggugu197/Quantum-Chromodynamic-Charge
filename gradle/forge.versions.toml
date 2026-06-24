@@ -1,0 +1,21 @@
+[versions]
+registryLib = "[8.0.14,)"
+mapleutillib = "[0.0.3,)"
+
+jei = "29.6.2.31"
+jade = "26.1.3+neoforge"
+ftbChunks = "2101.1.11"
+ftbLibrary = "2101.1.21"
+
+[libraries]
+registrylib = { group = "com.gto", name = "registrylib-neoforge-26.1.2", version.ref = "registryLib" }
+mapleutillib = { group = "com.maple197", name = "MapleUtilLib-neoforge-26.1.2", version.ref = "mapleutillib" }
+
+jeiApi = { group = "mezz.jei", name = "jei-26.1.2-neoforge-api", version.ref = "jei" }
+jei = { group = "mezz.jei", name = "jei-26.1.2-neoforge", version.ref = "jei" }
+jade = { group = "maven.modrinth", name = "jade", version.ref = "jade" }
+
+ftbChunks = { group = "dev.ftb.mods", name = "ftb-chunks-neoforge", version.ref = "ftbChunks" }
+ftbLibrary = { group = "dev.ftb.mods", name = "ftb-library-neoforge", version.ref = "ftbLibrary" }
+
+[bundles]

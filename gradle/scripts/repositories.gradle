@@ -1,0 +1,121 @@
+// Maven 仓库配置 - 定义项目依赖的来源
+repositories {
+    mavenLocal()           // 本地 Maven 仓库
+    flatDir { dir "libs" } // 本地 libs 目录（存放手动下载的 jar）
+    mavenCentral()         // Maven 中央仓库
+
+    // FTB 系列模组
+    maven {
+        url "https://maven.ftb.dev/releases"
+        content { includeGroup "dev.ftb.mods" }
+    }
+    // CurseForge 模组仓库
+    maven {
+        url "https://www.cursemaven.com"
+        content { includeGroup "curse.maven" }
+    }
+    // JEI
+    maven {
+        url "https://maven.blamejared.com"
+        content { includeGroup "mezz.jei" }
+    }
+    // Curios API
+    maven {
+        url = "https://maven.octo-studios.com/#/releases"
+        content { includeGroup 'top.theillusivec4.curios' }
+    }
+    // Create (机械动力)
+    maven {
+        url = "https://maven.createmod.net"
+        content { includeGroup "com.simibubi.create" }
+    }
+    // TrashSlot
+    maven {
+        url = "https://maven.twelveiterations.com/repository/maven-public/"
+        content { includeGroup "net.blay09.mods" }
+    }
+    // TerraformersMC - EMI
+    maven {
+        name = "TerraformersMC"
+        url = "https://maven.terraformersmc.com/"
+        content { includeGroup "dev.emi" }
+    }
+    // shedaniel - REI、Architectury、Cloth Config
+    maven {
+        url = "https://maven.shedaniel.me/"
+        content {
+            includeGroup "dev.architectury"
+            includeGroup "me.shedaniel"
+            includeGroup "me.shedaniel.cloth"
+        }
+    }
+    // Wisp Forest - Accessories
+    maven {
+        url = 'https://maven.wispforest.io/releases'
+        content { includeGroup "io.wispforest" }
+    }
+    // Modrinth
+    exclusiveContent {
+        forRepository { maven { url = "https://api.modrinth.com/maven/" } }
+        filter { includeGroup("maven.modrinth") }
+    }
+    // KubeJS
+    exclusiveContent {
+        forRepository { maven { url = "https://maven.latvian.dev/releases" } }
+        filter {
+            includeGroup("dev.latvian.mods")
+            includeGroup("dev.latvian.apps")
+        }
+    }
+    // GeckoLib
+    maven {
+        name = 'GeckoLib'
+        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+        content { includeGroup("software.bernie.geckolib") }
+    }
+    // Configuration API
+    exclusiveContent {
+        forRepository { maven { url = "https://repo.repsy.io/mvn/toma/public/" } }
+        filter { includeGroup('dev.toma.configuration') }
+    }
+    // The One Probe
+    exclusiveContent {
+        forRepository { maven { url = "https://maven.k-4u.nl/" } }
+        filter { includeGroup('mcjty.theoneprobe') }
+    }
+    // JourneyMap
+    exclusiveContent {
+        forRepository { maven { url = "https://jm.gserv.me/repository/maven-public/" } }
+        filter { includeGroup("info.journeymap") }
+    }
+    // Registrate
+    exclusiveContent {
+        forRepository { maven { url = "https://mvn.devos.one/snapshots/" } }
+        filter { includeGroup("com.tterrag.registrate") }
+    }
+    // KotlinForForge
+    exclusiveContent {
+        forRepository { maven { url = "https://thedarkcolour.github.io/KotlinForForge/" } }
+        filter { includeGroup("thedarkcolour") }
+    }
+    // Team Resourceful
+    exclusiveContent {
+        forRepository { maven { url = "https://maven.teamresourceful.com/repository/maven-public/" } }
+        filter {
+            includeGroupAndSubgroups("com.teamresourceful")
+            includeGroupAndSubgroups("earth.terrarium")
+        }
+    }
+    // CC: Tweaked
+    exclusiveContent {
+        forRepository { maven { url = "https://maven.squiddev.cc" } }
+        filter { includeGroup("cc.tweaked") }
+    }
+    // JitPack
+    exclusiveContent {
+        forRepository { maven { url = "https://jitpack.io/" } }
+        filter { includeGroup("com.github.rtyley") }
+    }
+    // GT Odyssey
+    maven { url = 'https://maven.gtodyssey.com/releases' }
+}
