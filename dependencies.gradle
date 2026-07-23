@@ -2,12 +2,11 @@ dependencies {
 
     implementation(forge.registrylib)
     implementation(forge.mapleutillib)
+    implementation(forge.configuration)
 
     compileOnly(forge.jeiApi)
     localRuntime(forge.jei)
     localRuntime(forge.jade)
 
     implementation(forge.ldlib2)
-
-    localRuntime(forge.bundles.ftbAll)
 }

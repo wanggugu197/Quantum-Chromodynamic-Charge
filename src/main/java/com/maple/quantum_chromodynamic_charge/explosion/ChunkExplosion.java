@@ -8,10 +8,7 @@ import net.minecraft.world.phys.AABB;
 import com.mapleutillib.utils.task.TickableSubscription;
 
 import static com.maple.quantum_chromodynamic_charge.common.QCCLevelTask.TASKS;
-import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.MAX_BLOCKS_PER_TICK;
-import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.chunkZSpeed;
-import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.killLivingIn;
-import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.playExplosionEffects;
+import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.*;
 
 /**
  * 以区块为单元、螺旋向外的大范围清除。

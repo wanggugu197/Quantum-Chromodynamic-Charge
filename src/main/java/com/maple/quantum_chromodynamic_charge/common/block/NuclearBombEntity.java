@@ -1,5 +1,6 @@
 package com.maple.quantum_chromodynamic_charge.common.block;
 
+import com.maple.quantum_chromodynamic_charge.config.QuantumChromodynamicChargeConfig;
 import com.maple.quantum_chromodynamic_charge.explosion.SphereExplosion;
 
 import net.minecraft.server.level.ServerLevel;
@@ -26,6 +27,9 @@ public class NuclearBombEntity extends BigPrimedTnt {
 
     @Override
     protected void explode() {
+        if (!QuantumChromodynamicChargeConfig.INSTANCE.explosion.enableNuclearBombExplosion) {
+            return;
+        }
         if (this.level() instanceof ServerLevel serverLevel) {
             SphereExplosion.explosion(this.blockPosition(), serverLevel, 80, true, true, true, true);
         }

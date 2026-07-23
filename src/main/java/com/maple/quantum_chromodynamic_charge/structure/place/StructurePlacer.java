@@ -12,6 +12,7 @@ import com.maple.quantum_chromodynamic_charge.structure.transform.StructureTrans
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -19,11 +20,7 @@ import com.mapleutillib.utils.task.TickableSubscription;
 import it.unimi.dsi.fastutil.chars.Char2ReferenceOpenHashMap;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.IntConsumer;
 
 /**
@@ -34,14 +31,19 @@ public final class StructurePlacer {
     /** 单 tick 内最多扫描的 pattern 格数（含跳过空气），防止极端情况下空转过久。 */
     private static final int MAX_SCAN_PER_TICK = 1_000_000;
 
+    private static final Set<Block> PLACEMENT_BLACKLIST = Set.of(
+            Blocks.BEDROCK,
+            Blocks.END_PORTAL_FRAME,
+            Blocks.END_PORTAL,
+            Blocks.END_GATEWAY,
+            Blocks.BARRIER);
+
     private final ServerLevel level;
     private final BlockIterator iterator;
     private final int perTick;
-    /** 世界中该格非空气则跳过，不覆盖。 */
     private final boolean skipOccupied;
     private final boolean skipAir;
     private final boolean updateLight;
-    /** 是否更新高度图；默认开启。 */
     private final boolean updateHeightmap;
     private final IntConsumer onBatch;
     private final Runnable onFinished;
@@ -96,7 +98,7 @@ public final class StructurePlacer {
                 placed++;
                 continue;
             }
-            if (old.is(Blocks.BEDROCK)) {
+            if (PLACEMENT_BLACKLIST.contains(old.getBlock())) {
                 placed++;
                 continue;
             }

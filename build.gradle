@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
+    id 'com.gto.gtopublishgradleplugin' version '1.0.24'
     id 'idea'
     alias libs.plugins.modDevGradle
     alias libs.plugins.spotless
@@ -10,6 +11,18 @@ plugins {
 version = "${mod_version}"
 group = 'com.maple197'
 base.archivesName = "${mod_name}"
+
+def secretFile = file("secret.properties")
+def secretProp = new Properties()
+if (secretFile.exists()){
+    secretFile.withInputStream { stream ->
+        secretProp.load(stream)
+    }
+    secretProp.each { k,v ->
+        project.ext.set(k as String, v)
+        project.setProperty(k as String, v)
+    }
+}
 
 java {
     toolchain {

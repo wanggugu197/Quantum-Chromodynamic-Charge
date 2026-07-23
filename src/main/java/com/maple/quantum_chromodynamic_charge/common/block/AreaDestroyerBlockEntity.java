@@ -2,6 +2,7 @@ package com.maple.quantum_chromodynamic_charge.common.block;
 
 import com.maple.quantum_chromodynamic_charge.common.QCCDataComponent;
 import com.maple.quantum_chromodynamic_charge.common.QCCRegistration;
+import com.maple.quantum_chromodynamic_charge.config.QuantumChromodynamicChargeConfig;
 import com.maple.quantum_chromodynamic_charge.explosion.AreaExplosion;
 import com.maple.quantum_chromodynamic_charge.explosion.ChunkExplosion;
 import com.maple.quantum_chromodynamic_charge.explosion.SphereExplosion;
@@ -21,11 +22,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Selector;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Switch;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.*;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.inventory.InventorySlots;
 import com.lowdragmc.lowdraglib2.gui.ui.style.StylesheetManager;
 import com.lowdragmc.lowdraglib2.gui.ui.styletemplate.Sprites;
@@ -95,6 +92,14 @@ public class AreaDestroyerBlockEntity extends DirectionBlockEntity implements IS
     @Persisted
     @DescSynced
     private ExplosionMode mode = ExplosionMode.SPHERE;
+
+    @Persisted
+    @DescSynced
+    private boolean updateHeightmap = true;
+
+    @Persisted
+    @DescSynced
+    private boolean updateLight = true;
 
     /** UI 用当量；由装药/模式推导，不持久化。 */
     @DescSynced
@@ -192,6 +197,7 @@ public class AreaDestroyerBlockEntity extends DirectionBlockEntity implements IS
     public void triggerExplosion() {
         Level level = getLevel();
         if (level == null || level.isClientSide() || !enabled) return;
+        if (!QuantumChromodynamicChargeConfig.INSTANCE.explosion.enableAreaDestroyerClearing) return;
 
         refreshYield();
         if (explosiveYield <= 0) return;
@@ -199,12 +205,12 @@ public class AreaDestroyerBlockEntity extends DirectionBlockEntity implements IS
         BlockPos self = getBlockPos();
         ExplosionMode m = mode == null ? ExplosionMode.SPHERE : mode;
         switch (m) {
-            case SPHERE -> SphereExplosion.explosion(self, level, explosiveYield, true, true, false, false);
-            case CHUNK -> ChunkExplosion.explosion(self, level, explosiveYield, true, true, false, false);
+            case SPHERE -> SphereExplosion.explosion(self, level, explosiveYield, updateHeightmap, updateLight, false, false);
+            case CHUNK -> ChunkExplosion.explosion(self, level, explosiveYield, updateHeightmap, updateLight, false, false);
             case AREA -> {
                 BlockPos[] c = coords();
                 if (c[0] == null || c[1] == null) return;
-                AreaExplosion.explosion(self, c[0], c[1], level, true, true, false, false);
+                AreaExplosion.explosion(self, c[0], c[1], level, updateHeightmap, updateLight, false, false);
             }
         }
 
@@ -230,6 +236,18 @@ public class AreaDestroyerBlockEntity extends DirectionBlockEntity implements IS
         if (sender.isServer()) return;
         mode = ExplosionMode.of(ordinal);
         refreshYield();
+    }
+
+    @RPCMethod
+    public void rpcSetUpdateHeightmap(RPCSender sender, boolean value) {
+        if (sender.isServer()) return;
+        updateHeightmap = value;
+    }
+
+    @RPCMethod
+    public void rpcSetUpdateLight(RPCSender sender, boolean value) {
+        if (sender.isServer()) return;
+        updateLight = value;
     }
 
     // -------------------------------------------------------------------------
@@ -265,6 +283,11 @@ public class AreaDestroyerBlockEntity extends DirectionBlockEntity implements IS
                 .textStyle(s -> s.adaptiveWidth(true).adaptiveHeight(true).textWrap(TextWrap.WRAP).fontSize(9))
                 .layout(l -> l.width(170)));
 
+        var optionsRow = row();
+        optionsRow.addChild(switchCell("ui.quantum_chromodynamic_charge.area_destroyer.update_heightmap", updateHeightmap, "rpcSetUpdateHeightmap"));
+        optionsRow.addChild(switchCell("ui.quantum_chromodynamic_charge.area_destroyer.update_light", updateLight, "rpcSetUpdateLight"));
+        root.addChild(optionsRow);
+
         var explosiveRow = row();
         explosiveRow.addChild(label(Component.translatable("ui.quantum_chromodynamic_charge.area_destroyer.explosives")));
         explosiveRow.addChild(slotGrid(explosiveInventory, EXPLOSIVE_SLOTS, 8));
@@ -277,10 +300,7 @@ public class AreaDestroyerBlockEntity extends DirectionBlockEntity implements IS
 
         // 开关与引爆
         var enableRow = row();
-        enableRow.addChild(label(Component.translatable("ui.quantum_chromodynamic_charge.area_destroyer.enabled")));
-        enableRow.addChild(new Switch()
-                .setOn(enabled, false)
-                .setOnSwitchChanged(on -> rpcToServer("rpcSetEnabled", on)));
+        enableRow.addChild(switchCell("ui.quantum_chromodynamic_charge.area_destroyer.enabled", enabled, "rpcSetEnabled"));
         enableRow.addChild(new Button()
                 .setText(Component.translatable("ui.quantum_chromodynamic_charge.area_destroyer.detonate"))
                 .textStyle(s -> s.adaptiveWidth(true))
@@ -316,5 +336,14 @@ public class AreaDestroyerBlockEntity extends DirectionBlockEntity implements IS
             grid.addChild(new ItemSlot().bind(handler, i));
         }
         return grid;
+    }
+
+    private UIElement switchCell(String key, boolean value, String rpc) {
+        var cell = row();
+        cell.addChild(label(Component.translatable(key)));
+        cell.addChild(new Switch()
+                .setOn(value, false)
+                .setOnSwitchChanged(on -> rpcToServer(rpc, on)));
+        return cell;
     }
 }

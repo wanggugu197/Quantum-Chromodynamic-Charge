@@ -8,12 +8,7 @@ import net.minecraft.world.phys.AABB;
 import com.mapleutillib.utils.task.TickableSubscription;
 
 import static com.maple.quantum_chromodynamic_charge.common.QCCLevelTask.TASKS;
-import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.MAX_BLOCKS_PER_TICK;
-import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.ceilSqrt;
-import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.floorSqrt;
-import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.killLivingIn;
-import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.playExplosionEffects;
-import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.sphereShellBatchSize;
+import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.*;
 
 /**
  * 渐进式球形爆炸清除：
@@ -25,7 +20,7 @@ import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.
  */
 public final class SphereExplosion {
 
-    public static final int INITIAL_SOLID_RADIUS = 50;
+    public static final int INITIAL_SOLID_RADIUS = 25;
 
     private static final int PHASE_SOLID = 0;
     private static final int PHASE_SHELL = 1;

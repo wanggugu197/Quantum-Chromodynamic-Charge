@@ -3,10 +3,8 @@ package com.maple.quantum_chromodynamic_charge.structure.material;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -34,14 +32,7 @@ public final class StructureMaterialTable {
         return t;
     }
 
-    public static StructureMaterialTable copyOf(@Nullable Map<StructureMaterialType, Integer> source) {
-        StructureMaterialTable t = empty();
-        if (source == null) return t;
-        source.forEach(t::set);
-        return t;
-    }
-
-    public static StructureMaterialTable fromArray(@Nullable int[] arr) {
+    public static StructureMaterialTable fromArray(int[] arr) {
         StructureMaterialTable t = empty();
         if (arr == null) return t;
         for (StructureMaterialType type : StructureMaterialType.values()) {
@@ -85,20 +76,6 @@ public final class StructureMaterialTable {
 
     public boolean isEmpty() {
         return map.isEmpty();
-    }
-
-    /** 只读视图（仅正数条目）。 */
-    public Map<StructureMaterialType, Integer> asMap() {
-        return Collections.unmodifiableMap(map);
-    }
-
-    /** 有正数的类型（顺序为枚举声明序）。 */
-    public List<StructureMaterialType> positiveTypes() {
-        List<StructureMaterialType> list = new ArrayList<>();
-        for (StructureMaterialType type : StructureMaterialType.values()) {
-            if (get(type) > 0) list.add(type);
-        }
-        return list;
     }
 
     /**

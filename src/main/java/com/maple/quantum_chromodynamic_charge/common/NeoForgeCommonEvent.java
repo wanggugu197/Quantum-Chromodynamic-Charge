@@ -1,6 +1,6 @@
 package com.maple.quantum_chromodynamic_charge.common;
 
-import com.maple.quantum_chromodynamic_charge.explosion.ChunkExplosion;
+import com.maple.quantum_chromodynamic_charge.config.QuantumChromodynamicChargeConfig;
 import com.maple.quantum_chromodynamic_charge.explosion.SphereExplosion;
 
 import net.minecraft.core.BlockPos;
@@ -23,6 +23,9 @@ public class NeoForgeCommonEvent {
     @SubscribeEvent
     @SuppressWarnings("all")
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        if (!QuantumChromodynamicChargeConfig.INSTANCE.explosion.enableEventChargeExplosions) {
+            return;
+        }
         Level level = event.getLevel();
         if (level == null) return;
         BlockPos pos = event.getPos();
@@ -38,7 +41,7 @@ public class NeoForgeCommonEvent {
         }
         if (item == QCCRegistration.GRAVI_STAR.get() &&
                 level.getBlockState(pos).getBlock() == QCCRegistration.LEPTONIC_CHARGE.get()) {
-            ChunkExplosion.explosion(pos, level, 800, true, true, true, true);
+            SphereExplosion.explosion(pos, level, 800, true, true, true, true);
             return;
         }
         if (item == QCCRegistration.UNSTABLE_STAR.get() &&

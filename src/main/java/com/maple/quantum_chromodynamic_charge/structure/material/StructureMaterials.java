@@ -1,19 +1,19 @@
 package com.maple.quantum_chromodynamic_charge.structure.material;
 
+import com.maple.quantum_chromodynamic_charge.QuantumChromodynamicChargeMod;
+import com.maple.quantum_chromodynamic_charge.common.QCCRegistration;
 import com.maple.quantum_chromodynamic_charge.common.QCCTab;
 
+import net.minecraft.client.color.item.Constant;
 import net.minecraft.world.item.Item;
 
 import com.gto.registrylib.util.entry.ItemEntry;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.maple.quantum_chromodynamic_charge.QuantumChromodynamicChargeMod.REGISTRY;
+import static com.mapleutillib.utils.generator.ModItemModelGeneratorHelper.createMultiLayerTintedFlatItem;
 
 /**
  * 结构材料物品总表：类型 × 档位 → {@link ItemEntry}。
@@ -36,8 +36,11 @@ public final class StructureMaterials {
                 String id = "structure_component_" + type.getSerializedName() + "_" + tier.getSerializedName();
                 TABLE[type.index()][tier.index()] = REGISTRY
                         .item(id)
-                        .langCn(tierLangCn(tier) + typeLangCn(type) + "组件")
+                        .langCn(tier.getNameCn() + type.getNameCn() + "组件")
                         .addTab(QCCTab.TAB_QCC.getKey())
+                        .model(() -> (item, prov) -> createMultiLayerTintedFlatItem(prov, item, Map.of(1, new Constant(type.getColor())),
+                                QuantumChromodynamicChargeMod.id("item/material_" + tier.getSerializedName() + "_0"),
+                                QuantumChromodynamicChargeMod.id("item/material_" + tier.getSerializedName() + "_1")))
                         .register();
             }
         }
@@ -45,35 +48,14 @@ public final class StructureMaterials {
 
     private StructureMaterials() {}
 
-    public record MaterialsEntry(StructureMaterialType type, StructureMaterialTier tier, int points, Item item) {
-
-        public int typeIndex() {
-            return type.index();
-        }
-    }
+    public record MaterialsEntry(StructureMaterialType type, StructureMaterialTier tier, int points, Item item) {}
 
     /**
      * 触达类加载以完成 static 注册（幂等）。
-     * 由 {@link com.maple.quantum_chromodynamic_charge.common.QCCRegistration} 在合适时机调用。
+     * 由 {@link QCCRegistration} 在合适时机调用。
      */
     public static void bootstrap() {
         // static 块已在类初始化时执行
-    }
-
-    private static String typeLangCn(StructureMaterialType type) {
-        return switch (type) {
-            case FRAME -> "框架";
-            case PLATE -> "板材";
-            case FINISH -> "饰面";
-        };
-    }
-
-    private static String tierLangCn(StructureMaterialTier tier) {
-        return switch (tier) {
-            case BASIC -> "初级";
-            case ADVANCED -> "中级";
-            case ELITE -> "高级";
-        };
     }
 
     public static ItemEntry<Item> entry(StructureMaterialType type, StructureMaterialTier tier) {
@@ -92,7 +74,7 @@ public final class StructureMaterials {
     public static List<MaterialsEntry> unloadEntries(StructureMaterialType type) {
         List<MaterialsEntry> list = new ArrayList<>(StructureMaterialTier.count());
         for (StructureMaterialTier tier : StructureMaterialTier.unloadOrder()) {
-            list.add(new MaterialsEntry(type, tier, tier.points(), item(type, tier)));
+            list.add(new MaterialsEntry(type, tier, tier.getPoints(), item(type, tier)));
         }
         return list;
     }
@@ -120,7 +102,7 @@ public final class StructureMaterials {
                     ItemEntry<Item> e = TABLE[type.index()][tier.index()];
                     if (e == null) continue;
                     Item it = e.asItem();
-                    map.put(it, new MaterialsEntry(type, tier, tier.points(), it));
+                    map.put(it, new MaterialsEntry(type, tier, tier.getPoints(), it));
                 }
             }
             // 仅在全部条目解析成功后缓存；否则下次再试

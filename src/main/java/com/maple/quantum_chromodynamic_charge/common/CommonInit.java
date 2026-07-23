@@ -1,6 +1,7 @@
 package com.maple.quantum_chromodynamic_charge.common;
 
-import com.maple.quantum_chromodynamic_charge.data.lang.ExampleLangHandler;
+import com.maple.quantum_chromodynamic_charge.config.QuantumChromodynamicChargeConfig;
+import com.maple.quantum_chromodynamic_charge.data.lang.QCCLangHandler;
 import com.maple.quantum_chromodynamic_charge.structure.registry.StructureTemplateRegistry;
 
 import net.neoforged.bus.api.IEventBus;
@@ -18,16 +19,16 @@ public class CommonInit {
 
     public static void init(IEventBus modBus) {
         CommonInit.modBus = modBus;
+        // 注册并加载配置
+        QuantumChromodynamicChargeConfig.init();
 
         QCCDataComponent.init();
-
-        // 先完成方块/物品注册（含 StructureMaterials static 材料表），再触达创造页签
         QCCRegistration.init();
         QCCTab.init();
 
         TaskHandler.registerAttachment(QCCLevelTask.LEVEL_TASK_DATA);
 
-        ExampleLangHandler.init();
+        QCCLangHandler.init();
         NeoForgeCommonEvent.init();
         // 触发预设库加载（读 classpath 结构资源）
         StructureTemplateRegistry.presetCount();

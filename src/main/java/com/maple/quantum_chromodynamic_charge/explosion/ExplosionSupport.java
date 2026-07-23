@@ -1,5 +1,7 @@
 package com.maple.quantum_chromodynamic_charge.explosion;
 
+import com.maple.quantum_chromodynamic_charge.config.QuantumChromodynamicChargeConfig;
+
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -18,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
 final class ExplosionSupport {
 
     /** 单 tick 最多提交的方块数，避免 TPS 尖刺与 GC 峰值 */
-    static final int MAX_BLOCKS_PER_TICK = 50_000;
+    static final int MAX_BLOCKS_PER_TICK = QuantumChromodynamicChargeConfig.maxBlocksPerTick();
 
     private ExplosionSupport() {}
 

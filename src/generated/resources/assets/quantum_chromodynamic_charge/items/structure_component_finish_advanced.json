@@ -1,6 +1,16 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "quantum_chromodynamic_charge:item/structure_component_finish_advanced"
+    "model": "quantum_chromodynamic_charge:item/structure_component_finish_advanced",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -1
+      },
+      {
+        "type": "minecraft:constant",
+        "value": -1638161
+      }
+    ]
   }
 }

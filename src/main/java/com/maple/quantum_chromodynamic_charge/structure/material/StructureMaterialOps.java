@@ -24,7 +24,7 @@ public final class StructureMaterialOps {
 
     private StructureMaterialOps() {}
 
-    public static int[] ensureBankSize(@Nullable int[] bank) {
+    public static int[] ensureBankSize(int[] bank) {
         int n = StructureMaterials.bankSize();
         if (bank != null && bank.length == n) {
             return bank;
@@ -36,7 +36,7 @@ public final class StructureMaterialOps {
         return next;
     }
 
-    public static StructureMaterialTable tableOf(@Nullable int[] bank) {
+    public static StructureMaterialTable tableOf(int[] bank) {
         return StructureMaterialTable.fromArray(ensureBankSize(bank));
     }
 

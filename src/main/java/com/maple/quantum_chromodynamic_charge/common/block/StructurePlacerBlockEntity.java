@@ -34,15 +34,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Selector;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Switch;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Tab;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.TabView;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.TextElement;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.*;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.inventory.InventorySlots;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.style.StylesheetManager;
@@ -175,7 +167,7 @@ public class StructurePlacerBlockEntity extends DirectionBlockEntity implements 
 
     @Persisted
     @DescSynced
-    private int speed = 50;
+    private int speed = 10;
 
     @Persisted
     @DescSynced
@@ -362,7 +354,7 @@ public class StructurePlacerBlockEntity extends DirectionBlockEntity implements 
                     level,
                     startPos(),
                     loaded,
-                    Math.max(100, speed * 100),
+                    Math.max(10000, speed * 10000),
                     skipOccupied,
                     skipAir,
                     updateLight,
@@ -468,7 +460,7 @@ public class StructurePlacerBlockEntity extends DirectionBlockEntity implements 
     @RPCMethod
     public void rpcNudgeSpeed(RPCSender sender, int delta) {
         if (sender.isServer()) return;
-        speed = Mth.clamp(speed + delta, 10, 100);
+        speed = Mth.clamp(speed + delta, 1, 100);
     }
 
     // -------------------------------------------------------------------------
@@ -629,11 +621,11 @@ public class StructurePlacerBlockEntity extends DirectionBlockEntity implements 
 
         panel.addChild(new Label()
                 .bindDataSource(SupplierDataSource.of(this::statusText))
-                .textStyle(s -> s.adaptiveWidth(true).adaptiveHeight(true).fontSize(12)));
+                .textStyle(s -> s.adaptiveWidth(true).adaptiveHeight(true).fontSize(10)));
 
         panel.addChild(new Button()
                 .setText(Component.translatable("ui.quantum_chromodynamic_charge.structure.place"))
-                .textStyle(s -> s.adaptiveWidth(true).adaptiveHeight(true).fontSize(12))
+                .textStyle(s -> s.adaptiveWidth(true).adaptiveHeight(true).fontSize(10))
                 .setOnServerClick(e -> {
                     if (e.button == 0) startPlacement();
                 })
@@ -824,7 +816,7 @@ public class StructurePlacerBlockEntity extends DirectionBlockEntity implements 
         sel.setCandidateUIProvider(i -> wrapLabel(labelOf.apply(i)));
         sel.setCandidates(indexList(size));
         sel.setSelected(selected, false);
-        sel.layout(l -> l.height(14).width(SELECTOR_W));
+        sel.layout(l -> l.height(14).minWidth(SELECTOR_W));
         return sel;
     }
 
@@ -889,7 +881,7 @@ public class StructurePlacerBlockEntity extends DirectionBlockEntity implements 
 
         // 旋转 + 速度同一行
         var rotSpeed = row();
-        rotSpeed.addChild(fixedLabel("ui.quantum_chromodynamic_charge.structure.rotation", 36));
+        rotSpeed.addChild(fixedLabel("ui.quantum_chromodynamic_charge.structure.rotation", 50));
         rotSpeed.addChild(valueLabel(() -> Component.literal(rotation + "°"), 32));
         rotSpeed.addChild(new Button()
                 .setText(Component.literal("+90°"))
@@ -907,7 +899,7 @@ public class StructurePlacerBlockEntity extends DirectionBlockEntity implements 
                 .textStyle(s -> s.adaptiveWidth(true).adaptiveHeight(true))
                 .setOnServerClick(e -> {
                     if (e.button == 0) {
-                        speed = Mth.clamp(speed - 5, 10, 100);
+                        speed = Mth.clamp(speed - 1, 10, 100);
                         markDirty("speed");
                     }
                 }));
@@ -915,7 +907,7 @@ public class StructurePlacerBlockEntity extends DirectionBlockEntity implements 
                 .textStyle(s -> s.adaptiveWidth(true).adaptiveHeight(true))
                 .setOnServerClick(e -> {
                     if (e.button == 0) {
-                        speed = Mth.clamp(speed + 5, 10, 100);
+                        speed = Mth.clamp(speed + 1, 10, 100);
                         markDirty("speed");
                     }
                 }));

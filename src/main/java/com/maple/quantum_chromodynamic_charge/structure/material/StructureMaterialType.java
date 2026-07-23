@@ -3,8 +3,8 @@ package com.maple.quantum_chromodynamic_charge.structure.material;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;
 
-import com.mojang.serialization.Codec;
-import org.jspecify.annotations.Nullable;
+import lombok.Getter;
+import org.jspecify.annotations.NonNull;
 
 /**
  * 结构材料类型（可扩展枚举）。
@@ -14,22 +14,24 @@ import org.jspecify.annotations.Nullable;
  */
 public enum StructureMaterialType implements StringRepresentable {
 
-    FRAME("frame"),
-    PLATE("plate"),
-    FINISH("finish");
-
-    public static final Codec<StructureMaterialType> CODEC = StringRepresentable.fromEnum(StructureMaterialType::values);
-
-    private static final StringRepresentable.EnumCodec<StructureMaterialType> BY_NAME = StringRepresentable.fromEnum(StructureMaterialType::values);
+    FRAME("frame", "框架", 0xaa66fd3c),
+    PLATE("plate", "板材", 0xaa3844f4),
+    FINISH("finish", "饰面", 0xaae700ef);
 
     private final String name;
+    @Getter
+    private final String nameCn;
+    @Getter
+    private final int color;
 
-    StructureMaterialType(String name) {
+    StructureMaterialType(String name, String nameCn, int color) {
         this.name = name;
+        this.nameCn = nameCn;
+        this.color = color;
     }
 
     @Override
-    public String getSerializedName() {
+    public @NonNull String getSerializedName() {
         return name;
     }
 
@@ -55,19 +57,5 @@ public enum StructureMaterialType implements StringRepresentable {
             throw new IllegalArgumentException("unknown StructureMaterialType index: " + index);
         }
         return all[index];
-    }
-
-    public static boolean isValidIndex(int index) {
-        return index >= 0 && index < values().length;
-    }
-
-    public static @Nullable StructureMaterialType byName(@Nullable String name) {
-        if (name == null || name.isEmpty()) return null;
-        return BY_NAME.byName(name);
-    }
-
-    public static StructureMaterialType byName(@Nullable String name, StructureMaterialType fallback) {
-        if (name == null || name.isEmpty()) return fallback;
-        return BY_NAME.byName(name, fallback);
     }
 }

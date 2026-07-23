@@ -1,17 +1,22 @@
-// Maven 发布配置示例
-// 如需启用发布功能，请取消注释以下代码并配置仓库地址
-/*
 publishing {
     publications {
-        create("mavenJava", MavenPublication) {
-            artifactId = project.base.archivesName.get()
-            from project.components.java
+        mavenJava(MavenPublication) {
+            artifactId = base.archivesName.get()
+            from components.java
         }
     }
 
     repositories {
         maven {
-            url = "https://your-maven-repo.com/maven/"
+            name = 'gtodysseyRepository'
+            url = 'https://maven.gtodyssey.com/releases'
+            credentials {
+                username = findProperty('gtodysseyRepositoryUsername')
+                password = findProperty('gtodysseyRepositoryPassword')
+            }
+        }
+        // Add repositories to publish to here.
+        maven {
             credentials {
                 username = System.getenv("MAVEN_USER")
                 password = System.getenv("MAVEN_PASSWORD")
@@ -19,4 +24,20 @@ publishing {
         }
     }
 }
-*/
+
+gtoPublish {
+    publishMaven = true
+    publishGithub = false
+    publishCurseforge = true
+
+    mavenRepoUrl = 'releases'
+
+    minecraftVersion = '26.1.2'
+    modLoader = 'NeoForge'
+
+    githubRepo = 'wanggugu197/Quantum-Chromodynamic-Charge'
+
+    curseforgeProjectId = '1622085'
+    curseforgeJavaVersion = 'Java 25'
+    curseforgeEnvironment = 'both'
+}

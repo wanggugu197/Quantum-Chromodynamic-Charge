@@ -2,8 +2,8 @@ package com.maple.quantum_chromodynamic_charge.structure.material;
 
 import net.minecraft.util.StringRepresentable;
 
-import com.mojang.serialization.Codec;
-import org.jspecify.annotations.Nullable;
+import lombok.Getter;
+import org.jspecify.annotations.NonNull;
 
 /**
  * 结构材料档位：点数与序列化名。
@@ -13,13 +13,9 @@ import org.jspecify.annotations.Nullable;
  */
 public enum StructureMaterialTier implements StringRepresentable {
 
-    BASIC("basic", 200),
-    ADVANCED("advanced", 1000),
-    ELITE("elite", 5000);
-
-    public static final Codec<StructureMaterialTier> CODEC = StringRepresentable.fromEnum(StructureMaterialTier::values);
-
-    private static final StringRepresentable.EnumCodec<StructureMaterialTier> BY_NAME = StringRepresentable.fromEnum(StructureMaterialTier::values);
+    BASIC("basic", "初级", 200),
+    ADVANCED("advanced", "中级", 1000),
+    ELITE("elite", "高级", 5000);
 
     /** 高点数优先，静态缓存避免每次分配。 */
     private static final StructureMaterialTier[] UNLOAD_ORDER;
@@ -33,24 +29,24 @@ public enum StructureMaterialTier implements StringRepresentable {
     }
 
     private final String name;
+    @Getter
+    private final String nameCn;
+    @Getter
     private final int points;
 
-    StructureMaterialTier(String name, int points) {
+    StructureMaterialTier(String name, String nameCn, int points) {
         this.name = name;
+        this.nameCn = nameCn;
         this.points = points;
     }
 
     @Override
-    public String getSerializedName() {
+    public @NonNull String getSerializedName() {
         return name;
     }
 
     public int index() {
         return ordinal();
-    }
-
-    public int points() {
-        return points;
     }
 
     public static int count() {
@@ -68,15 +64,5 @@ public enum StructureMaterialTier implements StringRepresentable {
             throw new IllegalArgumentException("unknown StructureMaterialTier index: " + index);
         }
         return all[index];
-    }
-
-    public static @Nullable StructureMaterialTier byName(@Nullable String name) {
-        if (name == null || name.isEmpty()) return null;
-        return BY_NAME.byName(name);
-    }
-
-    public static StructureMaterialTier byName(@Nullable String name, StructureMaterialTier fallback) {
-        if (name == null || name.isEmpty()) return fallback;
-        return BY_NAME.byName(name, fallback);
     }
 }

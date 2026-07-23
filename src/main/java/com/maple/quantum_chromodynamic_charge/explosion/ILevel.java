@@ -3,9 +3,9 @@ package com.maple.quantum_chromodynamic_charge.explosion;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
-import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -26,14 +26,8 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.shorts.Short2IntMap;
 import it.unimi.dsi.fastutil.shorts.Short2IntOpenHashMap;
-import it.unimi.dsi.fastutil.shorts.ShortOpenHashSet;
-import it.unimi.dsi.fastutil.shorts.ShortSet;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -41,8 +35,10 @@ import java.util.stream.Collectors;
  */
 public interface ILevel {
 
-    /** 单区块实际变化数达到此值时发整区块包，否则发区段更新包 */
+    /** 单区块实际变化数达到此值时发整区块包，否则逐方块 */
     int WHOLE_CHUNK_THRESHOLD = 4096 * 2;
+
+    record BlockSelection(Set<TagKey<Block>> tags, Set<Block> blocks) {}
 
     // ========== 公共入口 ==========
 
@@ -55,6 +51,25 @@ public interface ILevel {
                           boolean updateHeightmap,
                           boolean updateLight,
                           boolean syncToClient) {
+        SetBlocks(level, changes, updateHeightmap, updateLight, syncToClient, null, null);
+    }
+
+    /**
+     * 批量设置任意方块，并支持黑白名单过滤。
+     *
+     * <p>
+     * 过滤依据为当前位置原始方块状态：
+     * 黑名单命中则跳过，白名单存在时仅处理白名单命中的方块。
+     * </p>
+     */
+    static void SetBlocks(
+                          ServerLevel level,
+                          Map<BlockPos, BlockState> changes,
+                          boolean updateHeightmap,
+                          boolean updateLight,
+                          boolean syncToClient,
+                          BlockSelection blacklist,
+                          BlockSelection whitelist) {
         if (changes == null || changes.isEmpty()) return;
 
         Map<ChunkPos, Map<BlockPos, BlockState>> chunkGroups = changes.entrySet().stream()
@@ -64,7 +79,7 @@ public interface ILevel {
                                 SectionPos.blockToSectionCoord(e.getKey().getZ())),
                         Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (_, b) -> b)));
 
-        fastSetBlocks(level, chunkGroups, updateHeightmap, updateLight, syncToClient);
+        fastSetBlocks(level, chunkGroups, updateHeightmap, updateLight, syncToClient, blacklist, whitelist);
     }
 
     /**
@@ -76,6 +91,25 @@ public interface ILevel {
                              boolean updateHeightmap,
                              boolean updateLight,
                              boolean syncToClient) {
+        setAirBlocks(level, positions, updateHeightmap, updateLight, syncToClient, null, null);
+    }
+
+    /**
+     * 批量设为空气，并支持黑白名单过滤。
+     *
+     * <p>
+     * 过滤依据为当前位置原始方块状态：
+     * 黑名单命中则跳过，白名单存在时仅处理白名单命中的方块。
+     * </p>
+     */
+    static void setAirBlocks(
+                             ServerLevel level,
+                             List<BlockPos> positions,
+                             boolean updateHeightmap,
+                             boolean updateLight,
+                             boolean syncToClient,
+                             BlockSelection blacklist,
+                             BlockSelection whitelist) {
         if (positions == null || positions.isEmpty()) return;
 
         Long2ObjectMap<LongList> chunkGroups = new Long2ObjectOpenHashMap<>();
@@ -85,7 +119,7 @@ public interface ILevel {
                     SectionPos.blockToSectionCoord(pos.getZ()));
             chunkGroups.computeIfAbsent(key, _ -> new LongArrayList()).add(pos.asLong());
         }
-        applyAirByChunk(level, chunkGroups, updateHeightmap, updateLight, syncToClient);
+        applyAirByChunk(level, chunkGroups, updateHeightmap, updateLight, syncToClient, blacklist, whitelist);
     }
 
     /**
@@ -101,6 +135,21 @@ public interface ILevel {
                                    boolean updateHeightmap,
                                    boolean updateLight,
                                    boolean syncToClient) {
+        setAirBlocksPacked(level, packed, count, updateHeightmap, updateLight, syncToClient, null, null);
+    }
+
+    /**
+     * 批量设为空气（打包坐标缓冲），并支持黑白名单过滤。
+     */
+    static void setAirBlocksPacked(
+                                   ServerLevel level,
+                                   long[] packed,
+                                   int count,
+                                   boolean updateHeightmap,
+                                   boolean updateLight,
+                                   boolean syncToClient,
+                                   BlockSelection blacklist,
+                                   BlockSelection whitelist) {
         if (packed == null || count <= 0) return;
 
         Long2ObjectMap<LongList> chunkGroups = new Long2ObjectOpenHashMap<>();
@@ -113,7 +162,7 @@ public interface ILevel {
                     SectionPos.blockToSectionCoord(z));
             chunkGroups.computeIfAbsent(key, _ -> new LongArrayList()).add(p);
         }
-        applyAirByChunk(level, chunkGroups, updateHeightmap, updateLight, syncToClient);
+        applyAirByChunk(level, chunkGroups, updateHeightmap, updateLight, syncToClient, blacklist, whitelist);
     }
 
     /** 便捷：默认同步客户端 */
@@ -135,7 +184,10 @@ public interface ILevel {
                                         Long2ObjectMap<LongList> chunkGroups,
                                         boolean updateHeightmap,
                                         boolean updateLight,
-                                        boolean syncToClient) {
+                                        boolean syncToClient,
+                                        BlockSelection blacklist,
+                                        BlockSelection whitelist) {
+        Map<Block, Boolean> selectionCache = createSelectionCache(blacklist, whitelist);
         for (Long2ObjectMap.Entry<LongList> entry : chunkGroups.long2ObjectEntrySet()) {
             long key = entry.getLongKey();
             setAirBlocksInternal(
@@ -145,7 +197,10 @@ public interface ILevel {
                     entry.getValue(),
                     updateHeightmap,
                     updateLight,
-                    syncToClient);
+                    syncToClient,
+                    blacklist,
+                    whitelist,
+                    selectionCache);
         }
     }
 
@@ -158,9 +213,21 @@ public interface ILevel {
                               boolean updateHeightmap,
                               boolean updateLight,
                               boolean syncToClient) {
+        fastSetBlocks(level, chunkGroups, updateHeightmap, updateLight, syncToClient, null, null);
+    }
+
+    static void fastSetBlocks(
+                              ServerLevel level,
+                              Map<ChunkPos, Map<BlockPos, BlockState>> chunkGroups,
+                              boolean updateHeightmap,
+                              boolean updateLight,
+                              boolean syncToClient,
+                              BlockSelection blacklist,
+                              BlockSelection whitelist) {
         if (chunkGroups.isEmpty()) return;
 
         BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        Map<Block, Boolean> selectionCache = createSelectionCache(blacklist, whitelist);
 
         for (Map.Entry<ChunkPos, Map<BlockPos, BlockState>> chunkEntry : chunkGroups.entrySet()) {
             ChunkPos chunkPos = chunkEntry.getKey();
@@ -169,10 +236,14 @@ public interface ILevel {
 
             Short2IntMap columnMaxY = updateHeightmap ? new Short2IntOpenHashMap() : null;
             IntSet changedSections = updateLight ? new IntOpenHashSet() : null;
-            List<BlockPos> lightCheckPositions = updateLight ? new ArrayList<>() : null;
+            LongList lightChangePositions = updateLight ? new LongArrayList() : null;
+            List<BlockState> lightChangeOldStates = updateLight ? new ArrayList<>() : null;
+            List<BlockState> lightChangeNewStates = updateLight ? new ArrayList<>() : null;
+            List<BlockPos> syncPositions = syncToClient ? new ArrayList<>(chunkChanges.size()) : null;
+            List<BlockState> syncOldStates = syncToClient ? new ArrayList<>(chunkChanges.size()) : null;
+            List<BlockState> syncNewStates = syncToClient ? new ArrayList<>(chunkChanges.size()) : null;
             List<BlockPos> beToRemove = new ArrayList<>();
             List<Map.Entry<BlockPos, BlockState>> beToCreate = new ArrayList<>();
-            List<BlockPos> changedPositions = syncToClient ? new ArrayList<>(chunkChanges.size()) : null;
             int changedCount = 0;
 
             for (Map.Entry<BlockPos, BlockState> entry : chunkChanges.entrySet()) {
@@ -183,6 +254,10 @@ public interface ILevel {
 
                 int sectionIndex = chunk.getSectionIndex(y);
                 LevelChunkSection section = chunk.getSection(sectionIndex);
+                BlockState currentState = section.getBlockState(pos.getX() & 15, y & 15, pos.getZ() & 15);
+                if (!matchesSelection(currentState, blacklist, whitelist, selectionCache)) {
+                    continue;
+                }
                 int lx = pos.getX() & 15;
                 int ly = y & 15;
                 int lz = pos.getZ() & 15;
@@ -192,7 +267,11 @@ public interface ILevel {
                 if (oldState == state) continue;
 
                 changedCount++;
-                if (changedPositions != null) changedPositions.add(pos);
+                if (syncPositions != null) {
+                    syncPositions.add(pos);
+                    syncOldStates.add(currentState);
+                    syncNewStates.add(state);
+                }
 
                 if (columnMaxY != null) {
                     short colKey = (short) ((lx << 4) | lz);
@@ -204,9 +283,9 @@ public interface ILevel {
                     if (wasEmpty != section.hasOnlyAir()) {
                         changedSections.add(sectionIndex);
                     }
-                    if (LightEngine.hasDifferentLightProperties(chunk, pos, oldState, state)) {
-                        lightCheckPositions.add(pos);
-                    }
+                    lightChangePositions.add(pos.asLong());
+                    lightChangeOldStates.add(oldState);
+                    lightChangeNewStates.add(state);
                 }
 
                 if (oldState.hasBlockEntity()) beToRemove.add(pos);
@@ -214,7 +293,8 @@ public interface ILevel {
             }
 
             applyHeightmapUpdates(chunk, chunkPos, columnMaxY, mutablePos);
-            applyLightUpdates(level, chunk, chunkPos, changedSections, lightCheckPositions);
+            applyLightUpdates(level, chunk, chunkPos, changedSections,
+                    lightChangePositions, lightChangeOldStates, lightChangeNewStates);
 
             for (BlockPos pos : beToRemove) {
                 chunk.removeBlockEntity(pos);
@@ -236,8 +316,8 @@ public interface ILevel {
             chunk.markUnsaved();
 
             if (syncToClient && changedCount > 0) {
-                syncChunkChanges(level, chunk, chunkPos, changedPositions,
-                        beToRemove, List.of(), updateLight, changedCount);
+                syncChunkUpdates(level, chunk, chunkPos, syncPositions, syncOldStates, syncNewStates,
+                        updateLight, changedCount);
             }
         }
     }
@@ -252,7 +332,10 @@ public interface ILevel {
                                              LongList positions,
                                              boolean updateHeightmap,
                                              boolean updateLight,
-                                             boolean syncToClient) {
+                                             boolean syncToClient,
+                                             BlockSelection blacklist,
+                                             BlockSelection whitelist,
+                                             Map<Block, Boolean> selectionCache) {
         if (positions.isEmpty()) return;
 
         final BlockState air = Blocks.AIR.defaultBlockState();
@@ -262,10 +345,12 @@ public interface ILevel {
 
         Short2IntMap columnMaxY = updateHeightmap ? new Short2IntOpenHashMap() : null;
         IntSet changedSections = updateLight ? new IntOpenHashSet() : null;
-        List<BlockPos> lightCheckPositions = updateLight ? new ArrayList<>() : null;
-        List<BlockPos> bePositions = new ArrayList<>();
-        List<BlockState> beOldStates = new ArrayList<>();
-        List<BlockPos> changedPositions = syncToClient ? new ArrayList<>(positions.size()) : null;
+        LongList lightChangePositions = updateLight ? new LongArrayList() : null;
+        List<BlockState> lightChangeOldStates = updateLight ? new ArrayList<>() : null;
+        List<BlockState> lightChangeNewStates = updateLight ? new ArrayList<>() : null;
+        LongList changedPositions = syncToClient ? new LongArrayList(positions.size()) : null;
+        List<BlockState> syncOldStates = syncToClient ? new ArrayList<>(positions.size()) : null;
+        List<BlockState> syncNewStates = syncToClient ? new ArrayList<>(positions.size()) : null;
         int changedCount = 0;
 
         for (int i = 0, size = positions.size(); i < size; i++) {
@@ -282,6 +367,9 @@ public interface ILevel {
             int lz = z & 15;
 
             BlockState oldState = section.getBlockState(lx, ly, lz);
+            if (!matchesSelection(oldState, blacklist, whitelist, selectionCache)) {
+                continue;
+            }
             if (oldState.isAir()) {
                 // 已是空气：跳过高度图（避免用高空空气污染列更新）
                 continue;
@@ -290,25 +378,25 @@ public interface ILevel {
             boolean wasEmpty = section.hasOnlyAir();
 
             changedCount++;
-            mutablePos.set(x, y, z);
             if (changedPositions != null) {
-                changedPositions.add(mutablePos.immutable());
+                changedPositions.add(packed);
+                syncOldStates.add(oldState);
+                syncNewStates.add(air);
             }
             if (oldState.hasBlockEntity()) {
-                bePositions.add(mutablePos.immutable());
-                beOldStates.add(oldState);
+                mutablePos.set(x, y, z);
+                chunk.removeBlockEntity(mutablePos);
             }
 
-            chunk.removeBlockEntity(mutablePos);
             section.setBlockState(lx, ly, lz, air, false);
 
             if (updateLight) {
                 if (wasEmpty != section.hasOnlyAir()) {
                     changedSections.add(secIdx);
                 }
-                if (LightEngine.hasDifferentLightProperties(chunk, mutablePos, oldState, air)) {
-                    lightCheckPositions.add(mutablePos.immutable());
-                }
+                lightChangePositions.add(packed);
+                lightChangeOldStates.add(oldState);
+                lightChangeNewStates.add(air);
             }
 
             if (columnMaxY != null) {
@@ -319,12 +407,13 @@ public interface ILevel {
         }
 
         applyHeightmapUpdates(chunk, chunkPos, columnMaxY, mutablePos);
-        applyLightUpdates(level, chunk, chunkPos, changedSections, lightCheckPositions);
+        applyLightUpdates(level, chunk, chunkPos, changedSections,
+                lightChangePositions, lightChangeOldStates, lightChangeNewStates);
         chunk.markUnsaved();
 
         if (syncToClient && changedCount > 0) {
-            syncChunkChanges(level, chunk, chunkPos, changedPositions,
-                    bePositions, beOldStates, updateLight, changedCount);
+            syncChunkUpdatesPacked(level, chunk, chunkPos, changedPositions, syncOldStates, syncNewStates,
+                    updateLight, changedCount);
         }
     }
 
@@ -361,38 +450,66 @@ public interface ILevel {
                                           LevelChunk chunk,
                                           ChunkPos chunkPos,
                                           IntSet changedSections,
-                                          List<BlockPos> lightCheckPositions) {
-        if (changedSections == null || lightCheckPositions == null) return;
+                                          LongList lightChangePositions,
+                                          List<BlockState> lightChangeOldStates,
+                                          List<BlockState> lightChangeNewStates) {
+        if (changedSections == null || lightChangePositions == null || lightChangeOldStates == null || lightChangeNewStates == null) return;
 
         LevelLightEngine engine = level.getChunkSource().getLightEngine();
         int minSectionY = chunk.getMinSectionY();
 
-        for (int idx : changedSections) {
-            SectionPos sp = SectionPos.of(chunkPos, minSectionY + idx);
-            engine.updateSectionStatus(sp, chunk.getSection(idx).hasOnlyAir());
+        IntSet sectionsToUpdate = new IntOpenHashSet();
+        sectionsToUpdate.addAll(changedSections);
+
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        int lightChangeCount = Math.min(lightChangePositions.size(),
+                Math.min(lightChangeOldStates.size(), lightChangeNewStates.size()));
+        LongList lightCheckPositions = new LongArrayList(lightChangeCount);
+
+        for (int i = 0; i < lightChangeCount; i++) {
+            long packed = lightChangePositions.getLong(i);
+            mutablePos.set(BlockPos.getX(packed), BlockPos.getY(packed), BlockPos.getZ(packed));
+            if (level.isOutsideBuildHeight(mutablePos.getY())) continue;
+            if (LightEngine.hasDifferentLightProperties(chunk, mutablePos,
+                    lightChangeOldStates.get(i), lightChangeNewStates.get(i))) {
+                sectionsToUpdate.add(chunk.getSectionIndex(mutablePos.getY()));
+                lightCheckPositions.add(packed);
+            }
         }
-        for (BlockPos pos : lightCheckPositions) {
-            chunk.getSkyLightSources().update(chunk, pos.getX() & 15, pos.getY(), pos.getZ() & 15);
-            engine.checkBlock(pos);
+
+        for (int idx : sectionsToUpdate) {
+            if (idx < 0 || idx >= chunk.getSectionsCount()) continue;
+            SectionPos sp = SectionPos.of(chunkPos, minSectionY + idx);
+            boolean empty = chunk.getSection(idx).hasOnlyAir();
+            engine.updateSectionStatus(sp, empty);
+            level.getChunkSource().onSectionEmptinessChanged(chunkPos.x(), minSectionY + idx, chunkPos.z(), empty);
+        }
+
+        for (int i = 0, size = lightCheckPositions.size(); i < size; i++) {
+            long packed = lightCheckPositions.getLong(i);
+            mutablePos.set(BlockPos.getX(packed), BlockPos.getY(packed), BlockPos.getZ(packed));
+            if (level.isOutsideBuildHeight(mutablePos.getY())) continue;
+            int idx = chunk.getSectionIndex(mutablePos.getY());
+            if (!sectionsToUpdate.contains(idx)) continue;
+
+            chunk.getSkyLightSources().update(chunk, mutablePos.getX() & 15, mutablePos.getY(), mutablePos.getZ() & 15);
+            engine.checkBlock(mutablePos);
         }
     }
 
     /**
      * 网络同步：变化量大发全量区块包，否则发区段包 + BE 补偿。
      */
-    private static void syncChunkChanges(
+    private static void syncChunkUpdates(
                                          ServerLevel level,
                                          LevelChunk chunk,
                                          ChunkPos chunkPos,
                                          List<BlockPos> changedPositions,
-                                         List<BlockPos> bePositions,
-                                         List<BlockState> beOldStates,
+                                         List<BlockState> oldStates,
+                                         List<BlockState> newStates,
                                          boolean updateLight,
                                          int changedCount) {
         if (changedPositions == null || changedPositions.isEmpty()) return;
-
-        List<ServerPlayer> players = level.getChunkSource().chunkMap.getPlayers(chunkPos, false);
-        if (players.isEmpty()) return;
 
         if (changedCount >= WHOLE_CHUNK_THRESHOLD) {
             BitSet skyChanged = null;
@@ -415,42 +532,122 @@ public interface ILevel {
             }
             LevelLightEngine lightEngine = level.getChunkSource().getLightEngine();
             ClientboundLevelChunkWithLightPacket packet = new ClientboundLevelChunkWithLightPacket(chunk, lightEngine, skyChanged, blockChanged);
-            for (ServerPlayer player : players) {
-                player.connection.send(packet);
-            }
+            sendToTrackedPlayers(level, chunkPos, packet);
             return;
         }
 
-        Map<SectionPos, ShortSet> sectionPacketMap = new HashMap<>();
-        for (BlockPos pos : changedPositions) {
-            int y = pos.getY();
-            if (level.isOutsideBuildHeight(y)) continue;
-            SectionPos sp = SectionPos.of(pos);
-            sectionPacketMap.computeIfAbsent(sp, _ -> new ShortOpenHashSet())
-                    .add(SectionPos.sectionRelativePos(pos));
+        int syncCount = Math.min(changedPositions.size(), Math.min(oldStates.size(), newStates.size()));
+        for (int i = 0; i < syncCount; i++) {
+            BlockPos pos = changedPositions.get(i);
+            BlockState oldState = oldStates.get(i);
+            BlockState newState = newStates.get(i);
+            level.sendBlockUpdated(pos, oldState, newState, Block.UPDATE_CLIENTS);
         }
+    }
 
-        int minSectionY = chunk.getMinSectionY();
-        for (Map.Entry<SectionPos, ShortSet> sec : sectionPacketMap.entrySet()) {
-            SectionPos sp = sec.getKey();
-            int idx = sp.y() - minSectionY;
-            if (idx < 0 || idx >= chunk.getSectionsCount()) continue;
-            ClientboundSectionBlocksUpdatePacket pkt = new ClientboundSectionBlocksUpdatePacket(sp, sec.getValue(), chunk.getSection(idx));
-            for (ServerPlayer player : players) {
-                player.connection.send(pkt);
+    private static void syncChunkUpdatesPacked(
+                                               ServerLevel level,
+                                               LevelChunk chunk,
+                                               ChunkPos chunkPos,
+                                               LongList changedPositions,
+                                               List<BlockState> oldStates,
+                                               List<BlockState> newStates,
+                                               boolean updateLight,
+                                               int changedCount) {
+        if (changedPositions == null || changedPositions.isEmpty()) return;
+
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+
+        if (changedCount >= WHOLE_CHUNK_THRESHOLD) {
+            BitSet skyChanged = null;
+            BitSet blockChanged = null;
+            if (updateLight) {
+                int minSection = chunk.getMinSectionY();
+                int maxSection = chunk.getMaxSectionY();
+                int totalSections = maxSection - minSection + 1;
+                skyChanged = new BitSet(totalSections);
+                blockChanged = new BitSet(totalSections);
+                for (int i = 0, size = changedPositions.size(); i < size; i++) {
+                    long packed = changedPositions.getLong(i);
+                    mutablePos.set(BlockPos.getX(packed), BlockPos.getY(packed), BlockPos.getZ(packed));
+                    int secIdx = chunk.getSectionIndex(mutablePos.getY());
+                    int sectionY = minSection + secIdx;
+                    int bit = sectionY - minSection;
+                    if (bit >= 0 && bit < totalSections) {
+                        skyChanged.set(bit);
+                        blockChanged.set(bit);
+                    }
+                }
             }
+            LevelLightEngine lightEngine = level.getChunkSource().getLightEngine();
+            ClientboundLevelChunkWithLightPacket packet = new ClientboundLevelChunkWithLightPacket(chunk, lightEngine, skyChanged, blockChanged);
+            sendToTrackedPlayers(level, chunkPos, packet);
+            return;
         }
 
-        int beCount = Math.min(bePositions.size(), beOldStates.size());
-        for (int i = 0; i < beCount; i++) {
-            BlockPos pos = bePositions.get(i);
-            BlockState oldState = beOldStates.get(i);
-            level.sendBlockUpdated(pos, oldState, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+        int syncCount = Math.min(changedPositions.size(), Math.min(oldStates.size(), newStates.size()));
+        for (int i = 0; i < syncCount; i++) {
+            long packed = changedPositions.getLong(i);
+            mutablePos.set(BlockPos.getX(packed), BlockPos.getY(packed), BlockPos.getZ(packed));
+            BlockState oldState = oldStates.get(i);
+            BlockState newState = newStates.get(i);
+            level.sendBlockUpdated(mutablePos, oldState, newState, Block.UPDATE_CLIENTS);
+        }
+    }
+
+    private static void sendToTrackedPlayers(ServerLevel level, ChunkPos chunkPos, ClientboundLevelChunkWithLightPacket packet) {
+        List<ServerPlayer> players = level.getChunkSource().chunkMap.getPlayers(chunkPos, false);
+        if (players.isEmpty()) return;
+        for (ServerPlayer player : players) {
+            player.connection.send(packet);
         }
     }
 
     @SuppressWarnings("deprecation")
     private static void updateBlockEntityState(BlockEntity blockEntity, BlockState state) {
         blockEntity.setBlockState(state);
+    }
+
+    private static Map<Block, Boolean> createSelectionCache(BlockSelection blacklist, BlockSelection whitelist) {
+        return hasTagRules(blacklist) || hasTagRules(whitelist) ? new HashMap<>() : null;
+    }
+
+    private static boolean hasTagRules(BlockSelection selection) {
+        return selection != null && selection.tags() != null && !selection.tags().isEmpty();
+    }
+
+    private static boolean matchesSelection(BlockState state,
+                                            BlockSelection blacklist,
+                                            BlockSelection whitelist,
+                                            Map<Block, Boolean> cache) {
+        if (state == null) return false;
+
+        Block block = state.getBlock();
+        if (cache != null) {
+            Boolean cached = cache.get(block);
+            if (cached != null) {
+                return cached;
+            }
+        }
+
+        boolean result = !matchesAny(state, blacklist) && (whitelist == null || matchesAny(state, whitelist));
+        if (cache != null) {
+            cache.put(block, result);
+        }
+        return result;
+    }
+
+    private static boolean matchesAny(BlockState state, BlockSelection selection) {
+        if (selection == null) return false;
+        if (selection.blocks() != null && selection.blocks().contains(state.getBlock())) {
+            return true;
+        }
+        Set<TagKey<Block>> tags = selection.tags();
+        if (tags != null) {
+            for (TagKey<Block> tag : tags) {
+                if (tag != null && state.is(tag)) return true;
+            }
+        }
+        return false;
     }
 }

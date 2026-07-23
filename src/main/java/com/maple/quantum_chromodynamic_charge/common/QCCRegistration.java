@@ -1,19 +1,14 @@
 package com.maple.quantum_chromodynamic_charge.common;
 
 import com.maple.quantum_chromodynamic_charge.QuantumChromodynamicChargeMod;
-import com.maple.quantum_chromodynamic_charge.common.block.AreaDestroyerBlock;
-import com.maple.quantum_chromodynamic_charge.common.block.AreaDestroyerBlockEntity;
-import com.maple.quantum_chromodynamic_charge.common.block.BigPrimedTnt;
-import com.maple.quantum_chromodynamic_charge.common.block.BigTntBlock;
-import com.maple.quantum_chromodynamic_charge.common.block.NuclearBombBlock;
-import com.maple.quantum_chromodynamic_charge.common.block.NuclearBombEntity;
-import com.maple.quantum_chromodynamic_charge.common.block.StructurePlacerBlock;
-import com.maple.quantum_chromodynamic_charge.common.block.StructurePlacerBlockEntity;
+import com.maple.quantum_chromodynamic_charge.common.block.*;
 import com.maple.quantum_chromodynamic_charge.common.item.attachment.CoordinatePositioningAttachment;
+import com.maple.quantum_chromodynamic_charge.structure.material.StructureMaterials;
 
 import net.minecraft.client.renderer.entity.TntRenderer;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.Identifier;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.Item;
@@ -38,18 +33,6 @@ import static com.maple.quantum_chromodynamic_charge.common.QCCTab.TAB_QCC;
 public class QCCRegistration {
 
     public static void init() {}
-
-    public static final ItemEntry<Item> NXAMPLE_ITEM = REGISTRY
-            .item("example_item")
-            .langCn("示例物品")
-            .addTab(TAB_QCC.getKey())
-            .register();
-
-    public static final BlockEntry<Block> NXAMPLE_BLOCK = REGISTRY
-            .block("example_block")
-            .langCn("示例块")
-            .item(builder -> builder.addTab(TAB_QCC.getKey()))
-            .register();
 
     public static final BlockEntry<BigTntBlock> POWDER_BARREL = REGISTRY
             .block("powder_barrel", props -> new BigTntBlock(props, 2.0F, false, false))
@@ -100,6 +83,7 @@ public class QCCRegistration {
             .block("naquadria_charge")
             .langCn("超能硅岩爆弹")
             .initialProperties(Blocks.IRON_BLOCK)
+            .addTag(BlockTags.MINEABLE_WITH_PICKAXE)
             .item(builder -> builder.addTab(TAB_QCC.getKey()))
             .register();
 
@@ -113,6 +97,7 @@ public class QCCRegistration {
             .block("leptonic_charge")
             .langCn("轻子爆弹")
             .initialProperties(Blocks.IRON_BLOCK)
+            .addTag(BlockTags.MINEABLE_WITH_PICKAXE)
             .item(builder -> builder.addTab(TAB_QCC.getKey()))
             .register();
 
@@ -126,6 +111,7 @@ public class QCCRegistration {
             .block("quantum_chromodynamic_charge")
             .langCn("量子色动力学爆弹")
             .initialProperties(Blocks.IRON_BLOCK)
+            .addTag(BlockTags.MINEABLE_WITH_PICKAXE)
             .item(builder -> builder.addTab(TAB_QCC.getKey()))
             .register();
 
@@ -140,6 +126,8 @@ public class QCCRegistration {
     public static final BlockEntry<AreaDestroyerBlock> AREA_DESTROYER = REGISTRY
             .block("area_destroyer", AreaDestroyerBlock::new)
             .langCn("区域破坏器")
+            .initialProperties(Blocks.IRON_BLOCK)
+            .addTag(BlockTags.MINEABLE_WITH_PICKAXE)
             .blockstate(() -> (block, prov) -> {
                 Identifier identifier = ModBlockModelGeneratorHelper.createCustomSixWayBlock(prov, "area_destroyer",
                         QuantumChromodynamicChargeMod.id("block/area_destroyer/front"),
@@ -148,8 +136,6 @@ public class QCCRegistration {
                         QuantumChromodynamicChargeMod.id("block/area_destroyer/bottom"));
                 ModBlockModelGeneratorHelper.createHorizontalBlock(prov, block, identifier);
             })
-
-            .initialProperties(Blocks.IRON_BLOCK)
             .item(builder -> builder.addTab(TAB_QCC.getKey()))
             .register();
 
@@ -158,23 +144,19 @@ public class QCCRegistration {
             .validBlock(AREA_DESTROYER)
             .register();
 
-    static {
-        // 触达 StructureMaterials 类加载，由其 static 块完成类型×档位材料表注册
-        com.maple.quantum_chromodynamic_charge.structure.material.StructureMaterials.bootstrap();
-    }
-
     public static final BlockEntry<StructurePlacerBlock> STRUCTURE_PLACER = REGISTRY
             .block("structure_placer", StructurePlacerBlock::new)
             .langCn("结构放置器")
+            .initialProperties(Blocks.IRON_BLOCK)
+            .addTag(BlockTags.MINEABLE_WITH_PICKAXE)
             .blockstate(() -> (block, prov) -> {
                 Identifier identifier = ModBlockModelGeneratorHelper.createCustomSixWayBlock(prov, "structure_placer",
-                        QuantumChromodynamicChargeMod.id("block/area_destroyer/front"),
-                        QuantumChromodynamicChargeMod.id("block/area_destroyer/side"),
-                        QuantumChromodynamicChargeMod.id("block/area_destroyer/side"),
-                        QuantumChromodynamicChargeMod.id("block/area_destroyer/bottom"));
+                        QuantumChromodynamicChargeMod.id("block/structure_placer/front"),
+                        QuantumChromodynamicChargeMod.id("block/structure_placer/side"),
+                        QuantumChromodynamicChargeMod.id("block/structure_placer/side"),
+                        QuantumChromodynamicChargeMod.id("block/structure_placer/bottom"));
                 ModBlockModelGeneratorHelper.createHorizontalBlock(prov, block, identifier);
             })
-            .initialProperties(Blocks.IRON_BLOCK)
             .item(builder -> builder.addTab(TAB_QCC.getKey()))
             .register();
 
@@ -182,4 +164,9 @@ public class QCCRegistration {
             .blockEntity(REGISTRY, "structure_placer_entity", (_, p, s) -> new StructurePlacerBlockEntity(p, s))
             .validBlock(STRUCTURE_PLACER)
             .register();
+
+    static {
+        // 触达 StructureMaterials 类加载，由其 static 块完成类型×档位材料表注册
+        StructureMaterials.bootstrap();
+    }
 }

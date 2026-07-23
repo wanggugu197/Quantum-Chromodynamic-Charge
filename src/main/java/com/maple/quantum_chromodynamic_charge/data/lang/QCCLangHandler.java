@@ -8,7 +8,7 @@ import com.mapleutillib.api.registry.ModLangProvider;
 
 import static com.maple.quantum_chromodynamic_charge.QuantumChromodynamicChargeMod.REGISTRY;
 
-public class ExampleLangHandler {
+public class QCCLangHandler {
 
     public static Component addLang(String key, String cn, String en) {
         if (REGISTRY.doDatagen()) {
@@ -33,6 +33,9 @@ public class ExampleLangHandler {
         addLang("ui.quantum_chromodynamic_charge.area_destroyer.mode.area", "区域(坐标卡)", "Area (Coords)");
         addLang("ui.quantum_chromodynamic_charge.area_destroyer.explosives", "装药", "Explosives");
         addLang("ui.quantum_chromodynamic_charge.area_destroyer.coordinates", "坐标卡", "Coordinate Cards");
+        addLang("ui.quantum_chromodynamic_charge.area_destroyer.explosion_options", "爆炸选项", "Explosion Options");
+        addLang("ui.quantum_chromodynamic_charge.area_destroyer.update_heightmap", "更新高度图", "Update Heightmap");
+        addLang("ui.quantum_chromodynamic_charge.area_destroyer.update_light", "更新光照", "Update Light");
         addLang("ui.quantum_chromodynamic_charge.area_destroyer.detonate", "引爆", "Detonate");
         addLang("ui.quantum_chromodynamic_charge.area_destroyer.status", "当量: %s", "Yield: %s");
 
