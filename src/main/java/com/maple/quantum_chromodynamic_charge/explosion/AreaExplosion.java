@@ -7,14 +7,15 @@ import net.minecraft.world.phys.AABB;
 
 import com.mapleutillib.utils.task.TickableSubscription;
 
+import java.util.function.IntConsumer;
+
 import static com.maple.quantum_chromodynamic_charge.common.QCCLevelTask.TASKS;
 import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.*;
 
 /**
  * 轴对齐矩形区域分步清除。
- * <p>
  * X/Z 方向相邻条带在接缝处各重叠 1 格，把边界清得更干净。
- * {@code updateLight=false} 可关闭过程中光照更新。
+ * 支持进度回调和完成回调。
  */
 public final class AreaExplosion {
 
@@ -25,10 +26,11 @@ public final class AreaExplosion {
     private final int speedX, speedZ;
     private final int timeX, timeZ, totalTime;
     private final long[] buffer = new long[MAX_BLOCKS_PER_TICK];
+    private final IntConsumer onProgress;
+    private final Runnable onFinished;
 
     private int time = 0;
     private final TickableSubscription<?> subscription;
-
     private boolean stepActive = false;
     private int stepEndX;
     private int stepStartZ;
@@ -37,10 +39,13 @@ public final class AreaExplosion {
 
     private AreaExplosion(BlockPos center, BlockPos pos1, BlockPos pos2, ServerLevel level,
                           boolean updateHeightmap, boolean updateLight,
-                          boolean spawnParticles, boolean affectEntities) {
+                          boolean spawnParticles, boolean affectEntities,
+                          IntConsumer onProgress, Runnable onFinished) {
         this.level = level;
         this.updateHeightmap = updateHeightmap;
         this.updateLight = updateLight;
+        this.onProgress = onProgress != null ? onProgress : (p -> {});
+        this.onFinished = onFinished != null ? onFinished : () -> {};
 
         this.minX = Math.min(pos1.getX(), pos2.getX());
         this.minY = Math.min(pos1.getY(), pos2.getY());
@@ -71,6 +76,7 @@ public final class AreaExplosion {
     private void breakBlocksInArea() {
         if (time >= totalTime && !stepActive) {
             subscription.unsubscribe();
+            onFinished.run();
             return;
         }
 
@@ -145,18 +151,29 @@ public final class AreaExplosion {
         if (stepFinished) {
             stepActive = false;
             time++;
+            // 进度回调：0～100
+            int progress = (int) ((time * 100L) / totalTime);
+            onProgress.accept(progress);
         }
     }
 
-    /**
-     * @param updateLight 过程中是否更新光照；大范围可传 {@code false}
-     */
+    // ========== 静态入口 ==========
+
+    /** 原有方法（无回调） */
     public static void explosion(BlockPos center, BlockPos pos1, BlockPos pos2, Level level,
                                  boolean updateHeightmap, boolean updateLight,
                                  boolean spawnParticles, boolean affectEntities) {
+        explosion(center, pos1, pos2, level, updateHeightmap, updateLight, spawnParticles, affectEntities, null, null);
+    }
+
+    /** 新方法：带进度和完成回调 */
+    public static void explosion(BlockPos center, BlockPos pos1, BlockPos pos2, Level level,
+                                 boolean updateHeightmap, boolean updateLight,
+                                 boolean spawnParticles, boolean affectEntities,
+                                 IntConsumer onProgress, Runnable onFinished) {
         if (level instanceof ServerLevel serverLevel) {
             new AreaExplosion(center, pos1, pos2, serverLevel, updateHeightmap, updateLight,
-                    spawnParticles, affectEntities);
+                    spawnParticles, affectEntities, onProgress, onFinished);
         }
     }
 }

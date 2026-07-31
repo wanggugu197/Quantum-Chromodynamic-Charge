@@ -7,24 +7,14 @@ import net.minecraft.world.phys.AABB;
 
 import com.mapleutillib.utils.task.TickableSubscription;
 
+import java.util.function.IntConsumer;
+
 import static com.maple.quantum_chromodynamic_charge.common.QCCLevelTask.TASKS;
 import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.*;
 
 /**
  * 以区块为单元、螺旋向外的大范围清除。
- * <p>
- * <b>尺寸换算（务必阅读）</b>：
- * 
- * <pre>
- *   调用方传入 blockExtent（方块尺度的“边长意图”，例如 800）
- *     → chunkSide = max(1, blockExtent / 8)
- *     → 若为偶数则减 1，强制奇数
- *     → 实际清除 (chunkSide × chunkSide) 个区块，中心对齐
- *   例：800 → 100 → 99 → 99×99 区块
- * </pre>
- * 
- * 非中心区块朝爆炸中心一侧多清 1 格；单 tick 超过 {@link ExplosionSupport#MAX_BLOCKS_PER_TICK} 断点续传。
- * {@code updateLight=false} 可关闭过程中光照更新。
+ * 支持进度回调和完成回调。
  */
 public final class ChunkExplosion {
 
@@ -38,6 +28,8 @@ public final class ChunkExplosion {
     private final int minY;
     private final int maxY;
     private final long[] buffer = new long[MAX_BLOCKS_PER_TICK];
+    private final IntConsumer onProgress;
+    private final Runnable onFinished;
 
     private int time = 0;
     private boolean stepActive = false;
@@ -49,11 +41,14 @@ public final class ChunkExplosion {
 
     private ChunkExplosion(BlockPos center, ServerLevel level, int chunkSide,
                            boolean updateHeightmap, boolean updateLight,
-                           boolean spawnParticles, boolean affectEntities) {
+                           boolean spawnParticles, boolean affectEntities,
+                           IntConsumer onProgress, Runnable onFinished) {
         this.center = center;
         this.level = level;
         this.updateHeightmap = updateHeightmap;
         this.updateLight = updateLight;
+        this.onProgress = onProgress != null ? onProgress : (p -> {});
+        this.onFinished = onFinished != null ? onFinished : () -> {};
         this.minY = level.getMinY();
         this.maxY = level.getMaxY();
 
@@ -82,6 +77,7 @@ public final class ChunkExplosion {
     private void breakBlocksInChunk() {
         if (time >= totalTime && !stepActive) {
             subscription.unsubscribe();
+            onFinished.run();
             return;
         }
 
@@ -158,7 +154,6 @@ public final class ChunkExplosion {
             int zFrom = (x == currentX) ? currentZ : stepZStart;
             for (int z = zFrom; z != stepZEnd; z += stepZStep) {
                 int yFrom = (x == currentX && z == currentZ) ? currentY : minY;
-                // Y 已是世界 min～max，无需再钳制
                 for (int y = yFrom; y <= maxY; y++) {
                     buffer[count++] = BlockPos.asLong(x, y, z);
                     if (count >= MAX_BLOCKS_PER_TICK) {
@@ -202,6 +197,8 @@ public final class ChunkExplosion {
         if (stepFinished) {
             stepActive = false;
             time++;
+            int progress = (int) ((time * 100L) / totalTime);
+            onProgress.accept(progress);
         }
     }
 
@@ -228,14 +225,6 @@ public final class ChunkExplosion {
         return new int[] { x, z };
     }
 
-    /**
-     * 将调用方“方块尺度边长意图”换算为奇数区块边长。
-     * 
-     * <pre>
-     *   chunkSide = max(1, blockExtent / 8)
-     *   if even → chunkSide--
-     * </pre>
-     */
     public static int blockExtentToChunkSide(int blockExtent) {
         int chunkSide = blockExtent / 8;
         if (chunkSide < 1) chunkSide = 1;
@@ -243,39 +232,40 @@ public final class ChunkExplosion {
         return chunkSide;
     }
 
-    // ---------- 按方块尺度边长（兼容旧调用，如 800）----------
+    // ========== 静态入口（向后兼容） ==========
 
-    /**
-     * @param blockExtent 方块尺度边长意图，内部 {@link #blockExtentToChunkSide(int)}
-     * @param updateLight 过程中是否更新光照
-     */
     public static void explosion(BlockPos center, Level level, int blockExtent,
                                  boolean updateHeightmap, boolean updateLight,
                                  boolean spawnParticles, boolean affectEntities) {
+        explosion(center, level, blockExtent, updateHeightmap, updateLight, spawnParticles, affectEntities, null, null);
+    }
+
+    public static void explosion(BlockPos center, Level level, int blockExtent,
+                                 boolean updateHeightmap, boolean updateLight,
+                                 boolean spawnParticles, boolean affectEntities,
+                                 IntConsumer onProgress, Runnable onFinished) {
         if (level instanceof ServerLevel serverLevel) {
             int chunkSide = blockExtentToChunkSide(blockExtent);
             new ChunkExplosion(center, serverLevel, chunkSide, updateHeightmap, updateLight,
-                    spawnParticles, affectEntities);
+                    spawnParticles, affectEntities, onProgress, onFinished);
         }
     }
 
-    // ---------- 直接指定奇数区块边长 ----------
-
-    /**
-     * 按<strong>区块边长</strong>清除（已是区块数，不再 /8）。
-     * 若为偶数会自动减 1；小于 1 则为 1。
-     *
-     * @param chunkSide   区块边长（建议奇数）
-     * @param updateLight 过程中是否更新光照
-     */
     public static void explosionChunks(BlockPos center, Level level, int chunkSide,
                                        boolean updateHeightmap, boolean updateLight,
                                        boolean spawnParticles, boolean affectEntities) {
+        explosionChunks(center, level, chunkSide, updateHeightmap, updateLight, spawnParticles, affectEntities, null, null);
+    }
+
+    public static void explosionChunks(BlockPos center, Level level, int chunkSide,
+                                       boolean updateHeightmap, boolean updateLight,
+                                       boolean spawnParticles, boolean affectEntities,
+                                       IntConsumer onProgress, Runnable onFinished) {
         if (level instanceof ServerLevel serverLevel) {
             if (chunkSide < 1) chunkSide = 1;
             if ((chunkSide & 1) == 0) chunkSide--;
             new ChunkExplosion(center, serverLevel, chunkSide, updateHeightmap, updateLight,
-                    spawnParticles, affectEntities);
+                    spawnParticles, affectEntities, onProgress, onFinished);
         }
     }
 }

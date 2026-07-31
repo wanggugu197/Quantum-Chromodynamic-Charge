@@ -7,16 +7,13 @@ import net.minecraft.world.phys.AABB;
 
 import com.mapleutillib.utils.task.TickableSubscription;
 
+import java.util.function.IntConsumer;
+
 import static com.maple.quantum_chromodynamic_charge.common.QCCLevelTask.TASKS;
 import static com.maple.quantum_chromodynamic_charge.explosion.ExplosionSupport.*;
 
 /**
- * 渐进式球形爆炸清除：
- * <ol>
- * <li><b>0～50 实心</b>：整球 {@code r² ≤ min(50,R)²}（≤5 万格/tick）；</li>
- * <li><b>厚球壳批</b>：8/16 层合成一条环带，并向内重叠 1 层重扫已破坏边缘。</li>
- * </ol>
- * Y 扫描钳制在世界高度内，避免越界空转；{@code updateLight=false} 可关闭过程中光照以减轻 TPS 压力。
+ * 渐进式球形爆炸清除，支持进度回调和完成回调。
  */
 public final class SphereExplosion {
 
@@ -33,11 +30,12 @@ public final class SphereExplosion {
     private final long solidRadiusSq;
     private final boolean updateHeightmap;
     private final boolean updateLight;
-    /** 相对中心的合法 y 范围（世界高度钳制） */
     private final int yRelMin;
     private final int yRelMax;
     private final long[] buffer = new long[MAX_BLOCKS_PER_TICK];
     private final TickableSubscription<?> subscription;
+    private final IntConsumer onProgress;
+    private final Runnable onFinished;
 
     private int phase;
     private int batchEndL;
@@ -49,9 +47,13 @@ public final class SphereExplosion {
     private int relY = Integer.MIN_VALUE;
     private int ySeg;
 
+    // 进度相关
+    private double progress = 0.0; // 0.0～1.0
+
     private SphereExplosion(BlockPos center, ServerLevel level, int radius,
                             boolean updateHeightmap, boolean updateLight,
-                            boolean spawnParticles, boolean affectEntities) {
+                            boolean spawnParticles, boolean affectEntities,
+                            IntConsumer onProgress, Runnable onFinished) {
         this.level = level;
         this.cx = center.getX();
         this.cy = center.getY();
@@ -63,6 +65,8 @@ public final class SphereExplosion {
         this.updateLight = updateLight;
         this.yRelMin = level.getMinY() - this.cy;
         this.yRelMax = level.getMaxY() - this.cy;
+        this.onProgress = onProgress != null ? onProgress : (p -> {});
+        this.onFinished = onFinished != null ? onFinished : () -> {};
 
         this.phase = PHASE_SOLID;
         this.relZ = this.solidRadius;
@@ -82,15 +86,18 @@ public final class SphereExplosion {
     private void tick() {
         if (phase == PHASE_DONE) {
             subscription.unsubscribe();
+            onFinished.run();
             return;
         }
 
         int count = 0;
         if (phase == PHASE_SOLID) {
             count = fillSolid(0);
+            updateProgress();
         }
         if (phase == PHASE_SHELL && count < MAX_BLOCKS_PER_TICK) {
             count = fillThickShellBatches(count);
+            updateProgress();
         }
 
         if (count > 0) {
@@ -98,8 +105,27 @@ public final class SphereExplosion {
         }
 
         if (phase == PHASE_DONE) {
+            progress = 1.0;
+            onProgress.accept(100);
             subscription.unsubscribe();
+            onFinished.run();
         }
+    }
+
+    private void updateProgress() {
+        if (targetRadius <= 0) {
+            progress = 1.0;
+        } else if (phase == PHASE_SOLID) {
+            // 实心阶段占总体进度的 40%
+            double solidRatio = (double) solidRadius / targetRadius;
+            progress = solidRatio * 0.4;
+        } else if (phase == PHASE_SHELL) {
+            // 壳阶段占 60%
+            double shellProgress = (double) (batchEndL - solidRadius) / (targetRadius - solidRadius);
+            progress = 0.4 + shellProgress * 0.6;
+        }
+        int percent = (int) Math.min(99, Math.round(progress * 100));
+        onProgress.accept(percent);
     }
 
     // -------------------------------------------------------------------------
@@ -320,15 +346,19 @@ public final class SphereExplosion {
     // 公共入口
     // -------------------------------------------------------------------------
 
-    /**
-     * @param updateLight 过程中是否更新光照；大爆炸可传 {@code false} 显著减轻 TPS 压力
-     */
     public static void explosion(BlockPos center, Level level, int radius,
                                  boolean updateHeightmap, boolean updateLight,
                                  boolean spawnParticles, boolean affectEntities) {
+        explosion(center, level, radius, updateHeightmap, updateLight, spawnParticles, affectEntities, null, null);
+    }
+
+    public static void explosion(BlockPos center, Level level, int radius,
+                                 boolean updateHeightmap, boolean updateLight,
+                                 boolean spawnParticles, boolean affectEntities,
+                                 IntConsumer onProgress, Runnable onFinished) {
         if (level instanceof ServerLevel serverLevel) {
             new SphereExplosion(center, serverLevel, radius, updateHeightmap, updateLight,
-                    spawnParticles, affectEntities);
+                    spawnParticles, affectEntities, onProgress, onFinished);
         }
     }
 }
