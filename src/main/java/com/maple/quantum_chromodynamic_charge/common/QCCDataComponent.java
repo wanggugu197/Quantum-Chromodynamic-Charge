@@ -1,5 +1,6 @@
 package com.maple.quantum_chromodynamic_charge.common;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 
 import com.gto.registrylib.util.entry.DataComponentTypeEntry;
@@ -12,5 +13,7 @@ public class QCCDataComponent {
 
     public static final DataComponentTypeEntry<Vec3i> COORDINATE = REGISTRY.dataComponentTypeEntry(
             "coordinate",
-            builder -> builder.persistent(Vec3i.CODEC).networkSynchronized(Vec3i.STREAM_CODEC));
+            builder -> builder.persistent(Vec3i.CODEC)
+                    .networkSynchronized(BlockPos.STREAM_CODEC.map(
+                            blockPos -> blockPos, vec3i -> new BlockPos(vec3i.getX(), vec3i.getY(), vec3i.getZ()))));
 }

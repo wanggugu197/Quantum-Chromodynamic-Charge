@@ -2,7 +2,7 @@ package com.maple.quantum_chromodynamic_charge;
 
 import com.maple.quantum_chromodynamic_charge.common.CommonInit;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -37,7 +37,7 @@ public class QuantumChromodynamicChargeMod {
         CommonInit.init(modEventBus);
     }
 
-    public static Identifier id(String path) {
-        return Identifier.fromNamespaceAndPath(MODID, path);
+    public static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath(MODID, path);
     }
 }

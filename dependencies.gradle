@@ -9,4 +9,7 @@ dependencies {
     localRuntime(forge.jade)
 
     implementation(forge.ldlib2)
+
+    // org.jspecify 注解（Minecraft 1.21.1 使用，需显式声明）
+    compileOnly 'org.jspecify:jspecify:1.0.0'
 }

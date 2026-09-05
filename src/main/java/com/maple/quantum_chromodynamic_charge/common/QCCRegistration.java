@@ -7,7 +7,7 @@ import com.maple.quantum_chromodynamic_charge.structure.material.StructureMateri
 
 import net.minecraft.client.renderer.entity.TntRenderer;
 import net.minecraft.core.Vec3i;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -22,7 +22,6 @@ import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.EntityEntry;
 import com.gto.registrylib.util.entry.ItemEntry;
 import com.mapleutillib.utils.RLUtils;
-import com.mapleutillib.utils.generator.ModBlockModelGeneratorHelper;
 
 import static com.maple.quantum_chromodynamic_charge.QuantumChromodynamicChargeMod.REGISTRY;
 import static com.maple.quantum_chromodynamic_charge.common.QCCTab.TAB_QCC;
@@ -44,9 +43,18 @@ public class QCCRegistration {
     public static final BlockEntry<BigTntBlock> BIGGER_TNT = REGISTRY
             .block("bigger_tnt", props -> new BigTntBlock(props, 16.0F, false, true))
             .langCn("更大的TNT")
-            .blockstate(() -> (block, prov) -> prov.create(block,
-                    ModBlockModelGeneratorHelper.createCustomSixWayBlock(prov, "bigger_tnt",
-                            QuantumChromodynamicChargeMod.id("block/industrial_tnt_side"), RLUtils.mc("block/tnt_top"), RLUtils.mc("block/tnt_bottom"))))
+            .blockstate(() -> (block, prov) -> {
+                ResourceLocation modelId = prov.modLoc("block/bigger_tnt");
+                prov.getBuilder()
+                        .parent(RLUtils.get("maple_util_lib", "block/vertical_base"))
+                        .transformTexture(map -> {
+                            map.put("side", QuantumChromodynamicChargeMod.id("block/industrial_tnt_side").toString());
+                            map.put("top", RLUtils.mc("block/tnt_top").toString());
+                            map.put("bottom", RLUtils.mc("block/tnt_bottom").toString());
+                        })
+                        .build(modelId);
+                prov.create(block, modelId);
+            })
             .initialProperties(Blocks.TNT)
             .item(builder -> builder.addTab(TAB_QCC.getKey()))
             .register();
@@ -60,9 +68,18 @@ public class QCCRegistration {
     public static final BlockEntry<NuclearBombBlock> NUCLEAR_BOMB = REGISTRY
             .block("nuclear_bomb", NuclearBombBlock::new)
             .langCn("核弹")
-            .blockstate(() -> (block, prov) -> prov.create(block,
-                    ModBlockModelGeneratorHelper.createCustomSixWayBlock(prov, "nuclear_bomb",
-                            QuantumChromodynamicChargeMod.id("block/nuclear_bomb"), RLUtils.mc("block/tnt_top"), RLUtils.mc("block/tnt_bottom"))))
+            .blockstate(() -> (block, prov) -> {
+                ResourceLocation modelId = prov.modLoc("block/nuclear_bomb");
+                prov.getBuilder()
+                        .parent(RLUtils.get("maple_util_lib", "block/vertical_base"))
+                        .transformTexture(map -> {
+                            map.put("side", QuantumChromodynamicChargeMod.id("block/nuclear_bomb").toString());
+                            map.put("top", RLUtils.mc("block/tnt_top").toString());
+                            map.put("bottom", RLUtils.mc("block/tnt_bottom").toString());
+                        })
+                        .build(modelId);
+                prov.create(block, modelId);
+            })
             .initialProperties(Blocks.TNT)
             .item(builder -> builder.addTab(TAB_QCC.getKey()))
             .register();
@@ -129,18 +146,23 @@ public class QCCRegistration {
             .initialProperties(Blocks.IRON_BLOCK)
             .addTag(BlockTags.MINEABLE_WITH_PICKAXE)
             .blockstate(() -> (block, prov) -> {
-                Identifier identifier = ModBlockModelGeneratorHelper.createCustomSixWayBlock(prov, "area_destroyer",
-                        QuantumChromodynamicChargeMod.id("block/area_destroyer/front"),
-                        QuantumChromodynamicChargeMod.id("block/area_destroyer/side"),
-                        QuantumChromodynamicChargeMod.id("block/area_destroyer/side"),
-                        QuantumChromodynamicChargeMod.id("block/area_destroyer/bottom"));
-                ModBlockModelGeneratorHelper.createHorizontalBlock(prov, block, identifier);
+                ResourceLocation modelId = prov.modLoc("block/area_destroyer");
+                prov.getBuilder()
+                        .parent(RLUtils.get("maple_util_lib", "block/rotated_base"))
+                        .transformTexture(map -> {
+                            map.put("front", QuantumChromodynamicChargeMod.id("block/area_destroyer/front").toString());
+                            map.put("back", QuantumChromodynamicChargeMod.id("block/area_destroyer/side").toString());
+                            map.put("side", QuantumChromodynamicChargeMod.id("block/area_destroyer/side").toString());
+                            map.put("top", QuantumChromodynamicChargeMod.id("block/area_destroyer/bottom").toString());
+                        })
+                        .build(modelId);
+                prov.generateHorizontalBlock(block, modelId);
             })
             .item(builder -> builder.addTab(TAB_QCC.getKey()))
             .register();
 
     public static final BlockEntityTypeEntry<AreaDestroyerBlockEntity> AREA_DESTROYER_ENTITY = REGISTRY
-            .blockEntity(REGISTRY, "area_destroyer_entity", (_, p, s) -> new AreaDestroyerBlockEntity(p, s))
+            .blockEntity(REGISTRY, "area_destroyer_entity", (type, p, s) -> new AreaDestroyerBlockEntity(p, s))
             .validBlock(AREA_DESTROYER)
             .register();
 
@@ -150,18 +172,23 @@ public class QCCRegistration {
             .initialProperties(Blocks.IRON_BLOCK)
             .addTag(BlockTags.MINEABLE_WITH_PICKAXE)
             .blockstate(() -> (block, prov) -> {
-                Identifier identifier = ModBlockModelGeneratorHelper.createCustomSixWayBlock(prov, "structure_placer",
-                        QuantumChromodynamicChargeMod.id("block/structure_placer/front"),
-                        QuantumChromodynamicChargeMod.id("block/structure_placer/side"),
-                        QuantumChromodynamicChargeMod.id("block/structure_placer/side"),
-                        QuantumChromodynamicChargeMod.id("block/structure_placer/bottom"));
-                ModBlockModelGeneratorHelper.createHorizontalBlock(prov, block, identifier);
+                ResourceLocation modelId = prov.modLoc("block/structure_placer");
+                prov.getBuilder()
+                        .parent(RLUtils.get("maple_util_lib", "block/rotated_base"))
+                        .transformTexture(map -> {
+                            map.put("front", QuantumChromodynamicChargeMod.id("block/structure_placer/front").toString());
+                            map.put("back", QuantumChromodynamicChargeMod.id("block/structure_placer/side").toString());
+                            map.put("side", QuantumChromodynamicChargeMod.id("block/structure_placer/side").toString());
+                            map.put("top", QuantumChromodynamicChargeMod.id("block/structure_placer/bottom").toString());
+                        })
+                        .build(modelId);
+                prov.generateHorizontalBlock(block, modelId);
             })
             .item(builder -> builder.addTab(TAB_QCC.getKey()))
             .register();
 
     public static final BlockEntityTypeEntry<StructurePlacerBlockEntity> STRUCTURE_PLACER_ENTITY = REGISTRY
-            .blockEntity(REGISTRY, "structure_placer_entity", (_, p, s) -> new StructurePlacerBlockEntity(p, s))
+            .blockEntity(REGISTRY, "structure_placer_entity", (type, p, s) -> new StructurePlacerBlockEntity(p, s))
             .validBlock(STRUCTURE_PLACER)
             .register();
 

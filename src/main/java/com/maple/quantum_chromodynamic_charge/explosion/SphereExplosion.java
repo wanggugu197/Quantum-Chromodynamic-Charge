@@ -63,8 +63,8 @@ public final class SphereExplosion {
         this.solidRadiusSq = (long) this.solidRadius * this.solidRadius;
         this.updateHeightmap = updateHeightmap;
         this.updateLight = updateLight;
-        this.yRelMin = level.getMinY() - this.cy;
-        this.yRelMax = level.getMaxY() - this.cy;
+        this.yRelMin = level.getMinBuildHeight() - this.cy;
+        this.yRelMax = level.getMaxBuildHeight() - this.cy;
         this.onProgress = onProgress != null ? onProgress : (p -> {});
         this.onFinished = onFinished != null ? onFinished : () -> {};
 

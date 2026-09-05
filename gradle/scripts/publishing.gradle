@@ -32,12 +32,12 @@ gtoPublish {
 
     mavenRepoUrl = 'releases'
 
-    minecraftVersion = '26.1.2'
+    minecraftVersion = '1.21.1'
     modLoader = 'NeoForge'
 
     githubRepo = 'wanggugu197/Quantum-Chromodynamic-Charge'
 
     curseforgeProjectId = '1622085'
-    curseforgeJavaVersion = 'Java 25'
+    curseforgeJavaVersion = 'Java 21'
     curseforgeEnvironment = 'both'
 }

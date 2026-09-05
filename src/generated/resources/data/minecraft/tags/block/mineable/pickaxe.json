@@ -1,9 +1,9 @@
 {
   "values": [
-    "quantum_chromodynamic_charge:structure_placer",
-    "quantum_chromodynamic_charge:area_destroyer",
     "quantum_chromodynamic_charge:quantum_chromodynamic_charge",
+    "quantum_chromodynamic_charge:area_destroyer",
     "quantum_chromodynamic_charge:naquadria_charge",
+    "quantum_chromodynamic_charge:structure_placer",
     "quantum_chromodynamic_charge:leptonic_charge"
   ]
 }

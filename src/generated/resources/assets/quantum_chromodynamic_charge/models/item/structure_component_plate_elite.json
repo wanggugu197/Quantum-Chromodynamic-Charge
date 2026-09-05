@@ -1,7 +1,3 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "quantum_chromodynamic_charge:item/material_elite_0",
-    "layer1": "quantum_chromodynamic_charge:item/material_elite_1"
-  }
+  "parent": "quantum_chromodynamic_charge:item/structure_component_plate_elite_layered"
 }

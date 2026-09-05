@@ -9,7 +9,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -26,7 +25,7 @@ final class ExplosionSupport {
 
     static void playExplosionEffects(ServerLevel level, double x, double y, double z, boolean spawnParticles) {
         float pitch = (1.0f + (level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.2f) * 0.7f;
-        level.playSound(null, x, y, z, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 4.0f, pitch);
+        level.playSound(null, x, y, z, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 4.0f, pitch);
         if (spawnParticles) {
             level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, x, y, z, 1, 0.0, 0.0, 0.0, 0.0);
         }
@@ -35,11 +34,11 @@ final class ExplosionSupport {
 
     static void killLivingIn(ServerLevel level, AABB box) {
         for (Entity entity : level.getEntities(null, box)) {
-            if (entity instanceof Player player && player.gameMode() == GameType.CREATIVE) {
+            if (entity instanceof Player player && player.isCreative()) {
                 continue;
             }
             if (entity instanceof LivingEntity living) {
-                living.kill(level);
+                living.kill();
             }
         }
     }

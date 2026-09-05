@@ -4,6 +4,10 @@ repositories {
     flatDir { dir "libs" } // 本地 libs 目录（存放手动下载的 jar）
     mavenCentral()         // Maven 中央仓库
 
+    maven {
+        name = "NeoForged"
+        url = "https://maven.neoforged.net/releases/"
+    }
     // FTB 系列模组
     maven {
         url "https://maven.ftb.dev/releases"
@@ -15,13 +19,10 @@ repositories {
         content { includeGroup "curse.maven" }
     }
     // JEI
-    maven {
-        url "https://maven.blamejared.com"
-        content { includeGroup "mezz.jei" }
-    }
+    maven {url "https://maven.blamejared.com"}
     // Curios API
     maven {
-        url = "https://maven.octo-studios.com/#/releases"
+        url = uri("https://maven.theillusivec4.top/")
         content { includeGroup 'top.theillusivec4.curios' }
     }
     // Create (机械动力)
@@ -68,11 +69,7 @@ repositories {
         }
     }
     // GeckoLib
-    maven {
-        name = 'GeckoLib'
-        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
-        content { includeGroup("software.bernie.geckolib") }
-    }
+    maven {url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'}
     // Configuration API
     exclusiveContent {
         forRepository { maven { url = "https://repo.repsy.io/mvn/toma/public/" } }
@@ -120,4 +117,23 @@ repositories {
     maven { url = 'https://maven.gtodyssey.com/releases' }
     // LDLib2
     maven { url = "https://maven.firstdark.dev/snapshots" }
+    // Anvil Lib
+    maven {
+        url = "https://server.cjsah.net:1002/maven/"
+        content {
+            includeGroup "dev.anvilcraft.lib"
+            includeGroup "dev.dubhe"
+        }
+    }
+    // occultism
+    maven {
+        url "https://dl.cloudsmith.io/public/klikli-dev/mods/maven/"
+        content {
+            includeGroup "com.klikli_dev"
+        }
+    }
+    // EnderIO
+    maven { url 'https://maven.rover656.dev/releases' }
+    maven {url 'https://maven.blakesmods.com'}
+    maven {url 'https://maven.breakinblocks.com/releases'}
 }

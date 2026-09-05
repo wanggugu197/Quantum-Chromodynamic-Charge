@@ -6,7 +6,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -19,7 +19,6 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.BlockHitResult;
 
 import org.jetbrains.annotations.Nullable;
-import org.jspecify.annotations.NonNull;
 
 import static com.maple.quantum_chromodynamic_charge.common.QCCRegistration.ENTITY_QCC_TNT;
 
@@ -37,13 +36,14 @@ public class BigTntBlock extends TntBlock {
     }
 
     @Override
-    protected @NonNull InteractionResult useItemOn(@NonNull ItemStack itemStack, @NonNull BlockState state, @NonNull Level level, @NonNull BlockPos pos, @NonNull Player player, @NonNull InteractionHand hand, @NonNull BlockHitResult hitResult) {
+    protected ItemInteractionResult useItemOn(ItemStack itemStack, BlockState state, Level level, BlockPos pos,
+                                              Player player, InteractionHand hand, BlockHitResult hitResult) {
         return super.useItemOn(itemStack, state, level, pos, player, hand, hitResult);
     }
 
     @Override
-    public boolean onCaughtFire(@NonNull BlockState state, @NonNull Level level, @NonNull BlockPos pos,
-                                Direction face, LivingEntity igniter) {
+    public void onCaughtFire(BlockState state, Level level, BlockPos pos,
+                             @Nullable Direction face, @Nullable LivingEntity igniter) {
         if (level instanceof ServerLevel) {
             BigPrimedTnt primedTnt = createEntity(level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5,
                     explosionPower, this.defaultBlockState(), forceNoDrops, igniter);
@@ -51,13 +51,11 @@ public class BigTntBlock extends TntBlock {
             level.playSound(null, primedTnt.getX(), primedTnt.getY(), primedTnt.getZ(),
                     SoundEvents.TNT_PRIMED, SoundSource.BLOCKS, 1.0F, 1.0F);
             level.gameEvent(igniter, GameEvent.PRIME_FUSE, pos);
-            return true;
         }
-        return false;
     }
 
     @Override
-    public void wasExploded(@NonNull ServerLevel level, @NonNull BlockPos pos, @NonNull Explosion explosion) {
+    public void wasExploded(Level level, BlockPos pos, Explosion explosion) {
         BigPrimedTnt primed = createEntity(level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5,
                 explosionPower, this.defaultBlockState(), forceNoDrops, explosion.getIndirectSourceEntity());
         int fuse = primed.getFuse();
@@ -72,7 +70,7 @@ public class BigTntBlock extends TntBlock {
     }
 
     @Override
-    public @NonNull BlockState playerWillDestroy(@NonNull Level level, @NonNull BlockPos pos, @NonNull BlockState state, @NonNull Player player) {
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (explodeOnDestroy && !level.isClientSide() && !player.getAbilities().instabuild) {
             this.onCaughtFire(state, level, pos, null, null);
         }
@@ -80,7 +78,7 @@ public class BigTntBlock extends TntBlock {
     }
 
     @Override
-    public BlockState getStateForPlacement(@NonNull BlockPlaceContext context) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         return this.defaultBlockState();
     }
 }

@@ -7,7 +7,7 @@ import com.maple.quantum_chromodynamic_charge.structure.material.StructureMateri
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -52,8 +52,8 @@ public final class StructureDefinition {
                             @Nullable Component displayName,
                             @Nullable Component description,
                             @Nullable Component source,
-                            Identifier resource,
-                            Identifier blockMapping,
+                            ResourceLocation resource,
+                            ResourceLocation blockMapping,
                             StructureMaterialTable materials,
                             List<ExtraMaterial> extraMaterials,
                             int sizeX,
@@ -93,8 +93,8 @@ public final class StructureDefinition {
             private Component displayName;
             private Component description;
             private Component source;
-            private Identifier resource;
-            private Identifier symbolMap;
+            private ResourceLocation resource;
+            private ResourceLocation symbolMap;
             private final StructureMaterialTable materials = StructureMaterialTable.empty();
             private final List<ExtraMaterial> extraMaterials = new ArrayList<>();
 
@@ -128,12 +128,12 @@ public final class StructureDefinition {
                 return this;
             }
 
-            public Builder resource(Identifier resource) {
+            public Builder resource(ResourceLocation resource) {
                 this.resource = resource;
                 return this;
             }
 
-            public Builder symbolMap(Identifier symbolMap) {
+            public Builder symbolMap(ResourceLocation symbolMap) {
                 this.symbolMap = symbolMap;
                 return this;
             }
@@ -155,8 +155,8 @@ public final class StructureDefinition {
             }
 
             public Builder extraMaterials(String itemId, int count) {
-                Identifier id = RLUtils.parse(itemId);
-                Item resolved = BuiltInRegistries.ITEM.getValue(id);
+                ResourceLocation id = RLUtils.parse(itemId);
+                Item resolved = BuiltInRegistries.ITEM.get(id);
                 if (resolved == null) {
                     QuantumChromodynamicChargeMod.LOGGER.error("Unknown extra material item: {}", itemId);
                     return this;

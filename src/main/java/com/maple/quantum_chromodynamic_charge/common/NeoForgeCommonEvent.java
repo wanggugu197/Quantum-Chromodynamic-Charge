@@ -2,6 +2,7 @@ package com.maple.quantum_chromodynamic_charge.common;
 
 import com.maple.quantum_chromodynamic_charge.config.QuantumChromodynamicChargeConfig;
 import com.maple.quantum_chromodynamic_charge.explosion.SphereExplosion;
+import com.maple.quantum_chromodynamic_charge.structure.export.StructureExporter;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
@@ -11,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
 
 import static net.neoforged.neoforge.common.NeoForge.EVENT_BUS;
 
@@ -18,6 +20,11 @@ public class NeoForgeCommonEvent {
 
     public static void init() {
         EVENT_BUS.register(NeoForgeCommonEvent.class);
+    }
+
+    @SubscribeEvent
+    public static void onWorldUnload(LevelEvent.Unload event) {
+        StructureExporter.onWorldUnload((Level) event.getLevel());
     }
 
     @SubscribeEvent

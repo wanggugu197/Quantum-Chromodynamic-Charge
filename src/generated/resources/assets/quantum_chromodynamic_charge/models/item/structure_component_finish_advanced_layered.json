@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "quantum_chromodynamic_charge:item/material_advanced_0",
+    "layer1": "quantum_chromodynamic_charge:item/material_advanced_1"
+  }
+}

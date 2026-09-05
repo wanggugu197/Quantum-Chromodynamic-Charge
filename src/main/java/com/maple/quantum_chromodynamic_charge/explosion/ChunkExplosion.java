@@ -49,8 +49,8 @@ public final class ChunkExplosion {
         this.updateLight = updateLight;
         this.onProgress = onProgress != null ? onProgress : (p -> {});
         this.onFinished = onFinished != null ? onFinished : () -> {};
-        this.minY = level.getMinY();
-        this.maxY = level.getMaxY();
+        this.minY = level.getMinBuildHeight();
+        this.maxY = level.getMaxBuildHeight();
 
         int worldHeight = this.maxY - this.minY + 1;
         this.speed = chunkZSpeed(worldHeight);

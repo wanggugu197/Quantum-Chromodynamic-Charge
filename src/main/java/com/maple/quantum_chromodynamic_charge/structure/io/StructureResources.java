@@ -1,6 +1,6 @@
 package com.maple.quantum_chromodynamic_charge.structure.io;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * platforms 资源路径约定（与 GTO 一致）：
@@ -13,7 +13,7 @@ public final class StructureResources {
     private StructureResources() {}
 
     /** classpath 路径：保证扩展名存在。 */
-    public static String classpath(Identifier id, String extension) {
+    public static String classpath(ResourceLocation id, String extension) {
         String path = id.getPath();
         String ext = extension.startsWith(".") ? extension : "." + extension;
         if (!path.endsWith(ext)) {
@@ -22,11 +22,11 @@ public final class StructureResources {
         return ROOT + "/" + id.getNamespace() + "/" + path;
     }
 
-    public static String mbs(Identifier id) {
+    public static String mbs(ResourceLocation id) {
         return classpath(id, ".mbs");
     }
 
-    public static String json(Identifier id) {
+    public static String json(ResourceLocation id) {
         return classpath(id, ".json");
     }
 }

@@ -6,7 +6,7 @@ import com.maple.quantum_chromodynamic_charge.structure.model.StructureDefinitio
 import com.maple.quantum_chromodynamic_charge.structure.model.StructureDefinition.Structure;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import static com.maple.quantum_chromodynamic_charge.structure.material.StructureMaterialType.*;
 import static com.maple.quantum_chromodynamic_charge.structure.model.StructureDefinition.Structure.structure;
@@ -223,7 +223,7 @@ final class StructureBuiltinPresets {
                 .build();
     }
 
-    private static Identifier id(String path) {
+    private static ResourceLocation id(String path) {
         return QuantumChromodynamicChargeMod.id(path);
     }
 }

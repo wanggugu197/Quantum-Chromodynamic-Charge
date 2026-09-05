@@ -98,8 +98,8 @@ public final class AreaExplosion {
             stepActive = true;
         }
 
-        int worldMinY = level.getMinY();
-        int worldMaxY = level.getMaxY();
+        int worldMinY = level.getMinBuildHeight();
+        int worldMaxY = level.getMaxBuildHeight();
         int scanMinY = Math.max(minY, worldMinY);
         int yEnd = Math.min(maxY, worldMaxY);
 

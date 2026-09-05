@@ -4,16 +4,16 @@ import com.maple.quantum_chromodynamic_charge.QuantumChromodynamicChargeMod;
 import com.maple.quantum_chromodynamic_charge.common.QCCRegistration;
 import com.maple.quantum_chromodynamic_charge.common.QCCTab;
 
-import net.minecraft.client.color.item.Constant;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
 import com.gto.registrylib.util.entry.ItemEntry;
+import com.mapleutillib.utils.generator.ModItemModelGeneratorHelper;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
 import static com.maple.quantum_chromodynamic_charge.QuantumChromodynamicChargeMod.REGISTRY;
-import static com.mapleutillib.utils.generator.ModItemModelGeneratorHelper.createMultiLayerTintedFlatItem;
 
 /**
  * 结构材料物品总表：类型 × 档位 → {@link ItemEntry}。
@@ -38,9 +38,14 @@ public final class StructureMaterials {
                         .item(id)
                         .langCn(tier.getNameCn() + type.getNameCn() + "组件")
                         .addTab(QCCTab.TAB_QCC.getKey())
-                        .model(() -> (item, prov) -> createMultiLayerTintedFlatItem(prov, item, Map.of(1, new Constant(type.getColor())),
-                                QuantumChromodynamicChargeMod.id("item/material_" + tier.getSerializedName() + "_0"),
-                                QuantumChromodynamicChargeMod.id("item/material_" + tier.getSerializedName() + "_1")))
+                        .model(() -> (item, prov) -> {
+                            ResourceLocation layered = ModItemModelGeneratorHelper.createMultiLayerFlatItemModel(
+                                    prov,
+                                    prov.name(() -> item) + "_layered",
+                                    QuantumChromodynamicChargeMod.id("item/material_" + tier.getSerializedName() + "_0"),
+                                    QuantumChromodynamicChargeMod.id("item/material_" + tier.getSerializedName() + "_1"));
+                            ModItemModelGeneratorHelper.mapItemToModel(prov, item, layered);
+                        })
                         .register();
             }
         }

@@ -6,7 +6,8 @@ String getConfig(String key) {
 // 从 gradle.properties 读取配置项
 def version = getConfig("version")                            // 模组版本
 def mod_id = getConfig("mod_id")                              // 模组 ID
-def minecraft_version = getConfig("minecraft_version_range")  // Minecraft 版本范围
+def minecraft_version = getConfig("minecraft_version")        // Minecraft 版本
+def loader_version = libs.versions.loader.get()               // Loader 版本
 def mod_license = getConfig("mod_license")                    // 模组许可证
 def mod_name = getConfig("mod_name")                          // 模组名称
 def mod_authors = getConfig("mod_authors")                    // 模组作者
@@ -44,6 +45,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
     // 定义模板替换属性
     var replaceProperties = [
             minecraft_version   : minecraft_version,
+            loader_version      : loader_version,
             neo_version         : neoVersion,
             mod_issue_tracker   : mod_issue_tracker,
             mod_license         : mod_license,

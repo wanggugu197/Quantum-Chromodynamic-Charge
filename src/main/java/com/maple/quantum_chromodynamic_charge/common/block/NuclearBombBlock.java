@@ -12,7 +12,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 
 import org.jetbrains.annotations.Nullable;
-import org.jspecify.annotations.NonNull;
 
 public class NuclearBombBlock extends BigTntBlock {
 
@@ -20,6 +19,7 @@ public class NuclearBombBlock extends BigTntBlock {
         super(properties, 512.0F, true, true);
     }
 
+    @Override
     protected NuclearBombEntity createEntity(Level level, double x, double y, double z,
                                              float explosionPower, BlockState blockState,
                                              boolean forceNoDrops, @Nullable LivingEntity owner) {
@@ -27,8 +27,8 @@ public class NuclearBombBlock extends BigTntBlock {
     }
 
     @Override
-    public boolean onCaughtFire(@NonNull BlockState state, @NonNull Level level, @NonNull BlockPos pos,
-                                Direction face, LivingEntity igniter) {
+    public void onCaughtFire(BlockState state, Level level, BlockPos pos,
+                             @Nullable Direction face, @Nullable LivingEntity igniter) {
         if (level instanceof ServerLevel) {
             NuclearBombEntity primedTnt = createEntity(level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5,
                     2048.0F, this.defaultBlockState(), true, igniter);
@@ -36,17 +36,15 @@ public class NuclearBombBlock extends BigTntBlock {
             level.playSound(null, primedTnt.getX(), primedTnt.getY(), primedTnt.getZ(),
                     SoundEvents.TNT_PRIMED, SoundSource.BLOCKS, 1.0F, 1.0F);
             level.gameEvent(igniter, GameEvent.PRIME_FUSE, pos);
-            return true;
         }
-        return false;
     }
 
     @Override
-    public void wasExploded(@NonNull ServerLevel level, @NonNull BlockPos pos, @NonNull Explosion explosion) {
+    public void wasExploded(Level level, BlockPos pos, Explosion explosion) {
         NuclearBombEntity primed = createEntity(level, pos.getX() + 0.5F, pos.getY(), pos.getZ() + 0.5F,
                 2048.0F, this.defaultBlockState(), true, explosion.getIndirectSourceEntity());
         int fuse = primed.getFuse();
-        primed.setFuse((short) (level.getRandom().nextInt(fuse) + fuse / 4));
+        primed.setFuse(level.getRandom().nextInt(fuse) + fuse / 4);
         level.addFreshEntity(primed);
     }
 }

@@ -2,7 +2,7 @@ package com.maple.quantum_chromodynamic_charge.structure.io;
 
 import com.maple.quantum_chromodynamic_charge.QuantumChromodynamicChargeMod;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -121,7 +121,7 @@ public final class StructureFileIO {
         }
     }
 
-    public static PatternData loadResource(Identifier id) throws IOException {
+    public static PatternData loadResource(ResourceLocation id) throws IOException {
         return loadResource(StructureResources.mbs(id));
     }
 
@@ -155,13 +155,13 @@ public final class StructureFileIO {
         }
     }
 
-    /** @deprecated 使用 {@link StructureResources#mbs(Identifier)} */
+    /** @deprecated 使用 {@link StructureResources#mbs(ResourceLocation)} */
     @Deprecated
-    public static String resourcePath(Identifier id) {
+    public static String resourcePath(ResourceLocation id) {
         return StructureResources.mbs(id);
     }
 
-    public static PatternData tryLoadSizes(Identifier resource) {
+    public static PatternData tryLoadSizes(ResourceLocation resource) {
         try {
             return loadResource(resource);
         } catch (Exception e) {

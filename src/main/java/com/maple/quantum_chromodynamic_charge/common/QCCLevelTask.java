@@ -9,7 +9,7 @@ import static com.maple.quantum_chromodynamic_charge.QuantumChromodynamicChargeM
 public class QCCLevelTask {
 
     public static final AttachmentTypeEntry<LevelTaskData> LEVEL_TASK_DATA = REGISTRY
-            .attachmentType("level_task_data", _ -> new LevelTaskData())
+            .attachmentType("level_task_data", ignored -> new LevelTaskData())
             .serialize(LevelTaskData.CODEC)
             .register();
 

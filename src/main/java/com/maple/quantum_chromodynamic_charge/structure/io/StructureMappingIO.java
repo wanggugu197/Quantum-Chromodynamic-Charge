@@ -3,7 +3,7 @@ package com.maple.quantum_chromodynamic_charge.structure.io;
 import com.maple.quantum_chromodynamic_charge.QuantumChromodynamicChargeMod;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -38,7 +38,7 @@ public final class StructureMappingIO {
      * 从 {@code platforms/&lt;ns&gt;/&lt;path&gt;.json} 加载映射。
      * path 可带或不带 {@code .json}。
      */
-    public static Char2ReferenceOpenHashMap<BlockState> loadResource(Identifier resLoc) {
+    public static Char2ReferenceOpenHashMap<BlockState> loadResource(ResourceLocation resLoc) {
         String resourcePath = StructureResources.json(resLoc);
         try (InputStream stream = StructureMappingIO.class.getClassLoader().getResourceAsStream(resourcePath)) {
             if (stream == null) {
@@ -88,7 +88,7 @@ public final class StructureMappingIO {
 
     private static JsonObject serializeState(BlockState src) {
         JsonObject obj = new JsonObject();
-        Identifier id = BuiltInRegistries.BLOCK.getKey(src.getBlock());
+        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(src.getBlock());
         obj.addProperty("id", id.toString());
         JsonObject props = new JsonObject();
         for (Property<?> prop : src.getProperties()) {
@@ -99,7 +99,7 @@ public final class StructureMappingIO {
     }
 
     private static BlockState deserializeState(JsonObject obj) {
-        Block block = BuiltInRegistries.BLOCK.getValue(RLUtils.parse(obj.get("id").getAsString()));
+        Block block = BuiltInRegistries.BLOCK.get(RLUtils.parse(obj.get("id").getAsString()));
         if (block == null || block == Blocks.AIR) {
             return Blocks.AIR.defaultBlockState();
         }

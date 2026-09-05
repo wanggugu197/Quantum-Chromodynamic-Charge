@@ -185,10 +185,10 @@ public class StructurePlacerBlockEntity extends DirectionBlockEntity implements 
         coordinateInventory.setContext(this);
         coordinateInventory.setIOFilter(new ItemAllowListFilter(
                 Set.of(QCCRegistration.COORDINATE_POSITIONING_CARD.asItem()), Set.of()));
-        coordinateInventory.setOnChanged((_, _) -> markDirty("coordinateInventory"));
+        coordinateInventory.setOnChanged((slot, prev) -> markDirty("coordinateInventory"));
 
         materialInventory.setContext(this);
-        materialInventory.setOnChanged((_, _) -> {
+        materialInventory.setOnChanged((slot, prev) -> {
             markDirty("materialInventory");
             examineMaterials();
         });
